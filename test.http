@@ -1,0 +1,40 @@
+### Get Order
+
+POST http://localhost:4004/odata/v4/order/getOrder
+Content-Type: application/json
+
+{
+  "orderId": "1045fdb7-177c-49cf-ac3e-29a72914512c"
+}
+
+###    
+
+### Update Phone
+
+POST http://localhost:4004/odata/v4/order/updatePhone
+Content-Type: application/json
+
+{
+  "orderId": "65b04ba4-8e61-4f97-bfe7-a00fa6693a98",
+  "phone": "+4511122233"
+}
+
+###    
+
+### Update Custdetails
+
+POST http://localhost:4004/odata/v4/order/updateCustDetails
+Content-Type: application/json
+{
+  "orderId": "65b04ba4-8e61-4f97-bfe7-a00fa6693a98",
+  "description": "Happy Birthday OMF on the cake"
+}
+
+### Save Receipt
+
+POST http://localhost:4004/odata/v4/order/saveReceipt
+Content-Type: application/json
+
+{
+  "orderId":"1045fdb7-177c-49cf-ac3e-29a72914512c"
+}

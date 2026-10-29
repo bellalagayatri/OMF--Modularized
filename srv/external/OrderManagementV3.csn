@@ -1,0 +1,3677 @@
+{
+ "definitions": {
+  "Orders": {
+   "kind": "service",
+   "@Capabilities.BatchSupported": false,
+   "@Capabilities.KeyAsSegmentSupported": true,
+   "@Core.Description": "Orders",
+   "@Core.SchemaVersion": "3.1.7",
+   "@Core.LongDescription": "Provides methods to create, retrieve, change, and cancel orders for physical and subscription products across multiple channels. Orders are primarily created based on the payload received from an external application or an online store (additional configuration required). Orders can be retrieved by the service based on various search criteria, such as order ID, customer, order status, owner, or market."
+  },
+  "Orders.v3_orders_": {
+   "kind": "function",
+   "params": {
+    "orderId": {
+     "type": "cds.String",
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "1eb1dc4c-1901-4bea-b284-09df8c5fa42f",
+     "@description": "The technical identifier of the order to be retrieved.",
+     "@openapi.in": "path"
+    }
+   },
+   "@Common.Label": "Order Management Synchronous",
+   "@Core.Description": "Retrieves a single order.",
+   "@Core.LongDescription": "Retrieves a specific order by order ID. Each tenant has a limit of 500 requests per second.",
+   "@openapi.path": "/v3/orders/{orderId}",
+   "returns": {
+    "type": "Orders_types.OrderReadResponse"
+   }
+  },
+  "Orders.v3_orders__patch": {
+   "kind": "action",
+   "params": {
+    "orderId": {
+     "type": "cds.String",
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+     "@description": "The technical identifier of an order, for example, 'e10fdb83-5a51-419a-btr6-5d34bb2be0da'.",
+     "@openapi.in": "path"
+    },
+    "body": {
+     "@openapi.contentType": "application/merge-patch+json",
+     "type": "Orders_types.UpdateOrderRequestBodySchema",
+     "@openapi.in": "body"
+    }
+   },
+   "@Common.Label": "Order Management Asynchronous",
+   "@Core.Description": "Cancels or changes an order at specific points in the order lifecycle.",
+   "@Core.LongDescription": "Cancels or makes certain changes to an order at specific points in the order lifecycle. The use cases for this endpoint are described below:\n\n**A. Changes an order in status `TRANSFER_ON_HOLD`**\n\nThe types of changes permitted are limited to those represented in the `orderUpdateRequest` model. Note that if you make changes to the information in the following elements of payload, you must send all the information within the element, even the unchanged values:\n\n- `payment`\n- `fees`\n- `orderItems`\n- `shipments`\n\n**B. Cancels an order during processing**\n\nThis endpoint allows someone other than the end customer, for example, a retailer or system administrator, to cancel an order during processing. Orders in all statuses except `IN_TRANSFER`, `CANCELED`, and `CANCELED_DURING_PROCESSING` can be canceled during the fulfillment phase of order processing. After cancellation, the order status becomes `CANCELED_DURING_PROCESSING`.\n\n**C. Changes an order item during processing**\n\nChanges an order item during processing when an order is in one of the following statuses:\n\n- `TRANSFER_STARTED`\n- `TRANSFER_SUCCESSFUL`\n- `TRANSFER_FAILED`\n- `TRANSFER_PARTIALLY_FAILED`\n\nThis allows you to cancel an item in an order, reduce or increase an item's quantity, add an item, and change the information in the custom fields. Note that the custom field information can also be changed when an order is in status `CANCELED` or `CANCELED_DURING_PROCESSING`.\n\n**D. Changes an order header during processing**\n\nChanges an order header during processing when an order is in one of the following statuses:\n\n- `TRANSFER_SUCCESSFUL`\n- `CANCELED`\n- `CANCELED_DURING_PROCESSING`\n\nThis allows you to change certain information in certain fields. For a list of fields that cannot be changed, see the Order Change information in the Service Guide.\n\n**E. Retriggers an order**\n\nRetriggers an order in status `READY_FOR_TRANSFER`, `IN_TRANSFER`, `IN_TRANSFER_FAILED`, or `PENDING`.\n\n**F. Cancels an order**\n\nCancels an order in status `PENDING` or `TRANSFER_ON_HOLD`. Orders in status `TRANSFER_ON_HOLD` can only be canceled before the time recorded in the `transferHoldEndAt` field.\n\nNote that the full request cannot exceed 2 MB.\n",
+   "@openapi.method": "PATCH",
+   "@openapi.path": "/v3/orders/{orderId}"
+  },
+  "Orders.v3_orders": {
+   "kind": "function",
+   "params": {
+    "Prefer": {
+     "type": "cds.String",
+     "default": {
+      "val": "maxpagesize=10"
+     },
+     "@description": "Controls the number of orders per page. For example, `maxpagesize=20` retrieves 20 orders per page. Maximum 100. When omitted, the default is 10.",
+     "@openapi.in": "header"
+    },
+    "_select": {
+     "type": "cds.String",
+     "default": {
+      "val": "*"
+     },
+     "@description": "The header-level order fields to include in the results. The orders retrieved will contain the information\nfor the fields and subfields you select here.\nBy default, all fields are selected. You can also use an asterisk (\"*\") to select all fields.\nTo include only certain fields, use a comma-separated list of fields.\n\nTo exclude a field, add a minus (\"-\") sign before the field name. Example: `-orderItems, -prices`.\nIncluded fields take precedence over excluded fields. Note that the `id` field cannot be excluded.\n\nYou can include the following fields in your search:\n- `id`: This field is always part of the result.\n- `businessObjectId`\n- `version`\n- `precedingDocument`\n- `owner`\n- `metadata`\n- `displayId`\n- `channel`\n- `status`\n- `market`\n- `payment`\n- `description`\n- `pricingDate`\n- `prices`\n- `fees`\n- `discount`\n- `fulfillment`\n- `customer`\n- `shipToParty`\n- `orderItems`\n- `sourcing`\n- `transferHoldEndAt`\n- `customFields`\n",
+     "@openapi.in": "query",
+     "@openapi.name": "$select"
+    },
+    "_filter": {
+     "type": "cds.String",
+     "@description": "The fields to use as search filters. A maximum of 10 parameters is allowed.\nYou define your search criteria for the orders you want to return using the following fields:\n- `orderId`\n- `orderDisplayId`: Enter a number without quotation marks.\n- `createdAt`\n- `modifiedAt`\n- `status`\n- `marketId`\n- `owner`\n- `transferHoldEndAt`\n- `precedingDocumentExternalSystemId`: Searches on `precedingDocument.externalSystemReference.externalSystemId`\n- `precedingDocumentExternalId`: Searches on `precedingDocument.externalSystemReference.externalId`\n- `precedingDocumentExternalNumber`: Searches on `precedingDocument.externalSystemReference.externalNumber`\n- `customerId`: Searches on `customer.cuid`\n- `customerDisplayId`: Searches on `customer.displayId`\n- `shipToPartyId`: Searches on `shipToParty.cuid`\n- `anyCustomerAddressName`: Searches on any person names under `customer.addresses`\n- `anyCustomerName`: Searches on any customer or customer address person names\n- `anyShipToPartyName`: Searches on any ship-to party person names\n- `anyCustomerOrShipToPartyName`: Searches on any customer, ship-to party, and address names\n- `anyEmail`: Searches on email addresses across `customer.addresses` and `shipToParty.address`\n- `anyPhone`: Searches on phone numbers across `customer.addresses` and `shipToParty.address`\n- `customFields/{*}`: Searches on custom fields at the order header level with or without specifying an index for nested arrays\n- `blocked`: Searches on whether the order is blocked or not. Note that this filter is only available if you have auditor permissions. Example: `blocked eq true`\n\nThe filter can also use the `startswith` or `stringequals` functions for case-insensitive string comparisons of the following fields:\n- `orderId`\n- `anyCustomerAddressName`\n- `anyCustomerName`\n- `anyShipToPartyName`\n- `anyCustomerOrShipToPartyName`\n- `anyEmail`\n- `anyPhone`\n\nThe following comparison operators are supported:\n- `eq`: equals\n- `gt`: greater than\n- `lt`: less than\n- `ge`: greater than or equals\n- `le`: less than or equals\n\nThe supported logic operators are `and` and `or`. Parentheses can also be used for subexpressions.\n\nExamples:\n  - order display ID: `/orders?$filter=orderDisplayId eq 12341234`\n  - date range: `/orders?$filter=createdAt ge '{from}' and createdAt le '{to}'`. `{from}` and `{to}` are date-times expressed in the format \"2020-08-14T19:57:33.048Z\" (in UTC)\n  - customer ID: `/orders?$filter=customerId eq '{customerId}'`\n  - mixed: `/orders?$filter=createdAt ge '{from}' and customerId eq '{customerId}'`\n  - starts with: `/orders?$filter=startswith(anyCustomerName, 'Rob')`\n  - email starts with: `/orders?$filter=startswith(anyEmail, 'jane@')`\n  - custom field: `/orders?$filter=customFields/property/color eq 'red' and customFields/property/ready eq true and customFields/customArray[]/size eq 'M'`\n",
+     "@openapi.in": "query",
+     "@openapi.name": "$filter"
+    },
+    "_orderby": {
+     "type": "cds.String",
+     "default": {
+      "val": "createdAt desc"
+     },
+     "@description": "The field to use to sort the results. A single field is supported.\nIf omitted, the returned orders are sorted by default from the most recently created orders (`createdAt`).\nThe following fields are supported:\n- `orderId`\n- `orderDisplayId`\n- `createdAt`\n- `modifiedAt`\n- `status`\n- `marketId`\n- `owner`\n- `transferHoldEndAt`\n- `precedingDocumentExternalNumber`\n",
+     "@openapi.in": "query",
+     "@openapi.name": "$orderby"
+    },
+    "_skiptoken": {
+     "type": "cds.String",
+     "@description": "Continuation token used by the paging functionality.",
+     "@openapi.in": "query",
+     "@openapi.name": "$skiptoken"
+    },
+    "_count": {
+     "type": "cds.Boolean",
+     "default": {
+      "val": false
+     },
+     "@description": "This field enables return of the total number of orders found by the query. If set to `true`, the response will include a `count` field. The default value is `false`.\n",
+     "@openapi.in": "query",
+     "@openapi.name": "$count"
+    }
+   },
+   "@Common.Label": "Order Management Synchronous",
+   "@Core.Description": "Retrieves orders.",
+   "@Core.LongDescription": "Retrieves orders based on a combination of filters. Uses server-side pagination with a default of 10 orders per page. If there are more than 10 orders to retrieve, the results will include a relative link to the next page (`links[0].href`). The returned orders are sorted by newly modified or created orders first by default. Note that blocked orders are only returned if you have the auditor role.<br>Each tenant has a limit of 500 requests per second.",
+   "@openapi.path": "/v3/orders",
+   "returns": {
+    "type": "Orders_types.PageResult"
+   }
+  },
+  "Orders.v3_orders_post": {
+   "kind": "action",
+   "params": {
+    "body": {
+     "type": "Orders_types.CreateOrderRequestBodySchema",
+     "@openapi.in": "body"
+    }
+   },
+   "@Common.Label": "Order Management Asynchronous",
+   "@Core.Description": "Creates a new order.",
+   "@Core.LongDescription": "Creates an order according to the given payload and returns the ID of the created object.\nOrders are created in status `IN_TRANSFER`.\nNote that the full request cannot exceed 2 MB.\n",
+   "@openapi.path": "/v3/orders",
+   "returns": {
+    "type": "Orders_types.CreateOrderResponse"
+   }
+  },
+  "Orders.v3_orders__updateTransferHold_patch": {
+   "kind": "action",
+   "params": {
+    "orderId": {
+     "type": "cds.String",
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "1eb1dc4c-1901-4bea-b284-09df8c5fa42f",
+     "@description": "The technical identifier of the order to be retrieved.",
+     "@openapi.in": "path"
+    },
+    "body": {
+     "type": "Orders_types.extendTransferHoldRequest",
+     "@openapi.in": "body"
+    }
+   },
+   "@Common.Label": "Order Management Synchronous",
+   "@Core.Description": "Changes the transfer hold for an order.",
+   "@Core.LongDescription": "Extends or reduces the transfer hold time for an order. The order can't be sent for orchestration before the time present in the transferHoldEndAt field of the order. The transfer hold time can only be changed when an order is in status `TRANSFER_ON_HOLD`. In addition, the extension time can’t be changed 30 seconds before the transfer hold is set to end.<br>The hold duration can be extended for a maximum of 365 days after the order creation time, and can be reduced to send orders that meet certain criteria to the fulfillment system earlier. Note that the full request cannot exceed 2 MB.",
+   "@openapi.method": "PATCH",
+   "@openapi.path": "/v3/orders/{orderId}/updateTransferHold"
+  },
+  "Orders_types.PageLink": {
+   "elements": {
+    "rel": {
+     "@description": "The relationship of the linked page to the current page (for example, 'next' for the next page).",
+     "type": "cds.String"
+    },
+    "href": {
+     "@description": "The URL to retrieve the next set of results using the provided query parameters and skip token.",
+     "type": "cds.String"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.PageResult": {
+   "elements": {
+    "value": {
+     "items": {
+      "type": "Orders_types.OrderReadResponse"
+     }
+    },
+    "count": {
+     "@description": "The total number of orders retrieved in the request.",
+     "type": "cds.Integer"
+    },
+    "links": {
+     "@description": "An array of pagination links for navigating through the result set.",
+     "items": {
+      "type": "Orders_types.PageLink"
+     }
+    },
+    "countInThisPage": {
+     "@description": "The number of orders shown on this page.",
+     "type": "cds.Integer"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.OrderReadResponse": {
+   "@description": "The response when retrieving an order.",
+   "elements": {
+    "id": {
+     "@description": "The unique identifier of the order.",
+     "type": "cds.String",
+     "length": 36,
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "blocked": {
+     "@description": "The flag to indicate whether an order is blocked for reasons of data protection and privacy. This field is only visible to users who are assigned the DPPAudit scope for auditing purposes. For information, see the Security section of the Service Guide.",
+     "type": "cds.Boolean"
+    },
+    "businessObjectId": {
+     "@description": "The unique identifier provided in the order payload to ensure that a duplicate order could not be created in SAP Order Management foundation.",
+     "type": "cds.String",
+     "length": 50
+    },
+    "version": {
+     "@description": "The version of the order, used for optimistic locking.",
+     "type": "cds.Integer"
+    },
+    "precedingDocument": {
+     "@description": "The document that triggered the order creation.",
+     "elements": {
+      "externalSystemReference": {
+       "elements": {
+        "externalSystemId": {
+         "type": "Orders_types.ExternalSystemIdForPrecedingDocument"
+        },
+        "externalId": {
+         "type": "Orders_types.ExternalIdForPrecedingDocument"
+        },
+        "externalNumber": {
+         "@description": "The preceding document number from the external system.",
+         "type": "cds.String",
+         "length": 255
+        }
+       }
+      }
+     }
+    },
+    "owner": {
+     "@description": "The user responsible for the order. An owner is only assigned when an order is created on behalf of a customer, for example, if a sales agent or call center employee places an order for a customer.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "metadata": {
+     "elements": {
+      "createdAt": {
+       "@description": "The creation date and time for the order.",
+       "type": "cds.Timestamp"
+      },
+      "createdBy": {
+       "@description": "The user who created the order.",
+       "type": "cds.String"
+      },
+      "modifiedAt": {
+       "@description": "The date and time the order was last updated.",
+       "type": "cds.Timestamp"
+      },
+      "modifiedBy": {
+       "@description": "The user who last updated the order.",
+       "type": "cds.String"
+      }
+     }
+    },
+    "displayId": {
+     "@description": "The outward-facing identifier of the order.",
+     "type": "cds.Integer64"
+    },
+    "channel": {
+     "@description": "The means by which the order is received in SAP Order Management foundation (for example, Web, IoT, call center). Note that this may represent an intermediary channel, and not necessarily the channel in which the order was originally placed.",
+     "elements": {
+      "id": {
+       "@description": "The ID for the channel from which the order was received.",
+       "type": "cds.String",
+       "length": 36
+      }
+     }
+    },
+    "status": {
+     "@description": "The status of the order.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "TRANSFER_ON_HOLD": {},
+      "PENDING": {},
+      "READY_FOR_TRANSFER": {},
+      "IN_TRANSFER": {},
+      "IN_TRANSFER_FAILED": {},
+      "TRANSFER_STARTED": {},
+      "TRANSFER_SUCCESSFUL": {},
+      "TRANSFER_FAILED": {},
+      "TRANSFER_PARTIALLY_FAILED": {},
+      "CANCELED": {},
+      "CANCELED_DURING_PROCESSING": {},
+      "CREATION_FAILED": {},
+      "CREATION_PENDING": {}
+     }
+    },
+    "statusReasonCodes": {
+     "@description": "The reason codes explaining why an order is in status PENDING.",
+     "items": {
+      "type": "Orders.anonymous.type0"
+     }
+    },
+    "statusMessages": {
+     "@description": "The list of messages explaining why an order is in status CREATION_FAILED.",
+     "items": {
+      "type": "common.JSON"
+     }
+    },
+    "market": {
+     "@description": "The market for the order. For more information about markets, see the Business Configuration information in the Service Guide.",
+     "elements": {
+      "marketId": {
+       "@description": "The ID for the market.",
+       "type": "cds.String",
+       "length": 255,
+       "@mandatory": true
+      },
+      "currency": {
+       "@description": "The currency of the order. Only the three-letter ISO currency code (ISO 4217) is accepted.",
+       "type": "cds.String",
+       "length": 3
+      },
+      "priceType": {
+       "@description": "The price type used for the order: NET or GROSS.",
+       "type": "cds.String",
+       "@assert.range": true,
+       "enum": {
+        "NET": {},
+        "GROSS": {}
+       }
+      },
+      "timeZone": {
+       "@description": "The time zone of the order.",
+       "type": "cds.String"
+      }
+     }
+    },
+    "payment": {
+     "@description": "The information received in the order from your payment provider (for example, the SAP digital payments add-on).",
+     "items": {
+      "elements": {
+       "method": {
+        "@description": "The method of payment defined in SAP Order Management foundation.",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "INVOICE": {},
+         "PAYMENT_CARD": {},
+         "EXTERNAL_PAYMENT": {},
+         "DIRECT_DEBIT": {},
+         "CUSTOM": {}
+        }
+       },
+       "type": {
+        "@description": "The type of electronic payment for external payments.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "cardToken": {
+        "@description": "The payment card token provided by the payment service. The token is used to determine the remaining information related to payment card payments. Note that credit card information is not stored in SAP Order Management foundation.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "authorization": {
+        "elements": {
+         "id": {
+          "@description": "The unique identifier for authorization provided by the payment service.",
+          "type": "cds.String",
+          "length": 255
+         },
+         "merchantId": {
+          "@description": "The unique number issued by the acquirer or payment service provider to identify a merchant to settle external payments.",
+          "type": "cds.String",
+          "length": 255
+         }
+        }
+       },
+       "authorizedAmount": {
+        "elements": {
+         "amount": {
+          "@description": "The gross value that is to be billed for external payments. A maximum of 13 digits is allowed before the decimal point, and a maximum of two digits (decimal places) is allowed after. A maximum of 15 digits is allowed when the value does not contain a decimal point.",
+          "type": "cds.Double"
+         }
+        }
+       },
+       "paymentServiceProvider": {
+        "@description": "The payment service provider sent to the payment system for external payments. For example, you are processing an external payment and send the payment service provider 'PAYPAL' to the SAP digital payments add-on.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "transactionId": {
+        "@description": "The transaction ID for external payments.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "customFields": {
+        "@description": "The custom fields for a payment. This field will only be filled if the payment method is 'CUSTOM'.",
+        "elements": {}
+       }
+      }
+     }
+    },
+    "description": {
+     "@description": "The description of the order.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "pricingDate": {
+     "@description": "The date and time used to determine the price for the subscription. Note that this field is only relevant for subscription items.",
+     "type": "cds.Timestamp"
+    },
+    "prices": {
+     "@description": "The prices for the order.",
+     "items": {
+      "elements": {
+       "category": {
+        "@description": "The category of the prices.",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "ONE_TIME": {},
+         "RECURRING": {},
+         "RECURRING_ESTIMATE": {}
+        }
+       },
+       "period": {
+        "@description": "The duration for which the charge is applied. It applies to recurring and recurring estimate price categories.",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "CALENDAR_MONTHLY": {},
+         "ANNIVERSARY_MONTHLY": {},
+         "CALENDAR_QUARTERLY": {},
+         "ANNIVERSARY_QUARTERLY": {},
+         "CALENDAR_HALF_YEARLY": {},
+         "ANNIVERSARY_HALF_YEARLY": {},
+         "CALENDAR_YEARLY": {},
+         "ANNIVERSARY_YEARLY": {}
+        }
+       },
+       "itemsSubtotal": {
+        "@description": "The subtotal of the order items.",
+        "elements": {
+         "originalAmount": {
+          "@description": "The sum of all the original amounts of the items in the order. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double"
+         },
+         "effectiveAmount": {
+          "@description": "The sum of all the effective amounts of the items in the order. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double"
+         },
+         "finalAmount": {
+          "@description": "The sum of all the final amounts of the items in the order. The sum represents what the customer will be charged. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double"
+         },
+         "tax": {
+          "type": "Orders_types.Tax"
+         },
+         "discount": {
+          "@description": "The schema for the discounts in an order.",
+          "elements": {
+           "totalAmount": {
+            "@description": "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+            "type": "cds.Double"
+           }
+          }
+         }
+        }
+       },
+       "feesSubtotal": {
+        "@description": "The subtotal of the fees for the order.",
+        "elements": {
+         "originalAmount": {
+          "@description": "The sum of all original amounts of the fees in the order.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "effectiveAmount": {
+          "@description": "The sum of all the effective amounts of the fees in the order.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "finalAmount": {
+          "@description": "The sum of all the final amounts of the fees in the order. The sum represents what the customer will be charged.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "tax": {
+          "type": "Orders_types.Tax"
+         }
+        }
+       },
+       "total": {
+        "@description": "The total for the order.",
+        "elements": {
+         "originalAmount": {
+          "@description": "The sum of all the original amounts in the order. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "effectiveAmount": {
+          "@description": "The sum of all the effective amounts in the order. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "finalAmount": {
+          "@description": "The amount represents what the customer will be charged for the order. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "tax": {
+          "type": "Orders_types.Tax"
+         },
+         "discount": {
+          "@description": "The schema for the discounts in an order.",
+          "elements": {
+           "totalAmount": {
+            "@description": "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+            "type": "cds.Double",
+            "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+            "@Core.Example.Value": 11.22
+           }
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "fees": {
+     "items": {
+      "elements": {
+       "category": {
+        "@description": "The category of the fee. Only one fee is accepted for each fee category. For example, you can only include one payment fee.",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "SHIPPING": {},
+         "PAYMENT": {}
+        }
+       },
+       "originalAmount": {
+        "@description": "The initial or base amount of a fee. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22
+       },
+       "effectiveAmount": {
+        "@description": "The original amount of a fee (minus discounts). An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22
+       },
+       "finalAmount": {
+        "@description": "The amount of the fee the customer will be charged. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22
+       },
+       "tax": {
+        "elements": {
+         "totalAmount": {
+          "@description": "The sum of all taxes applied.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "lines": {
+          "type": "Orders_types.TaxLines"
+         }
+        }
+       }
+      }
+     }
+    },
+    "discount": {
+     "@description": "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+     "elements": {
+      "totalAmount": {
+       "@description": "The sum of all discounts applied.",
+       "type": "cds.Double"
+      },
+      "lines": {
+       "type": "Orders_types.DiscountLinesHeader"
+      }
+     }
+    },
+    "fulfillment": {
+     "@description": "The fulfillment information from the fulfillment system for the order.",
+     "elements": {
+      "shipment": {
+       "@description": "The shipment information for the order. Note that this information reflects the shipment information from the fulfillment system.",
+       "elements": {
+        "fullyShipped": {
+         "@description": "The flag to indicate whether the full order has been shipped to the customer. Note that the status of this attribute is only updated to ''true'' when confirmation is received from the Order Activities API that all order items in the order have been shipped. Until that point, the Orders API has no information about the order shipment status and it cannot be inferred.",
+         "type": "cds.Boolean"
+        },
+        "fullyDelivered": {
+         "@description": "The flag to indicate whether the full order has been delivered to the customer. Note that the status of this attribute is only updated to ''true'' when confirmation is received from the Order Activities API that all order items in the order have been fully delivered. Until that point, the Orders API has no information about the order delivery status and it cannot be inferred.",
+         "type": "cds.Boolean"
+        }
+       }
+      }
+     }
+    },
+    "customer": {
+     "@description": "The customer information for the order.",
+     "elements": {
+      "cuid": {
+       "@description": "The ID for a customer from the master data. For purposes of data protection and privacy, this ID is used in the Data Subject ID field in the SAP Personal Data Manager app.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "displayId": {
+       "@description": "The outward-facing identifier of the customer.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "externalSystemReference": {
+       "elements": {
+        "externalSystemId": {
+         "type": "Orders_types.ExternalSystemId"
+        },
+        "externalId": {
+         "type": "Orders_types.ExternalId"
+        }
+       }
+      },
+      "guest": {
+       "@description": "The flag to indicate if a guest user placed the order.",
+       "type": "cds.Boolean"
+      },
+      "customerType": {
+       "@description": "The type of customer, for example, a person or company.",
+       "type": "cds.String",
+       "@assert.range": true,
+       "enum": {
+        "PERSON": {},
+        "COMPANY": {}
+       }
+      },
+      "company": {
+       "@description": "The company name of the individual customer.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "person": {
+       "type": "Orders_types.Person"
+      },
+      "addresses": {
+       "items": {
+        "type": "Orders.anonymous.type1"
+       }
+      }
+     }
+    },
+    "shipToParty": {
+     "@description": "The information for the customer (partner) who will receive the order. If this schema is present, the ship-to address should be provided here and not in the customer schema.",
+     "elements": {
+      "cuid": {
+       "@description": "The ID for the ship-to party from the master data.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "displayId": {
+       "@description": "The outward-facing identifier of the ship-to party.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "externalSystemReference": {
+       "@description": "The external system references for the ship-to party. This represents an external system (such as an online store) that provides customer-related data as part of the order payload.",
+       "elements": {
+        "externalSystemId": {
+         "type": "Orders_types.ExternalSystemId"
+        },
+        "externalId": {
+         "type": "Orders_types.ExternalId"
+        }
+       }
+      },
+      "type": {
+       "@description": "The type of ship-to party, for example, a person or company.",
+       "type": "cds.String",
+       "@assert.range": true,
+       "enum": {
+        "PERSON": {},
+        "COMPANY": {}
+       }
+      },
+      "company": {
+       "@description": "The company name of the individual customer.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "person": {
+       "type": "Orders_types.Person"
+      },
+      "address": {
+       "@description": "The address information for the order.",
+       "elements": {
+        "street": {
+         "type": "Orders_types.Street"
+        },
+        "houseNumber": {
+         "type": "Orders_types.HouseNumber"
+        },
+        "building": {
+         "type": "Orders_types.Building"
+        },
+        "roomNumber": {
+         "type": "Orders_types.RoomNumber"
+        },
+        "floorNumber": {
+         "type": "Orders_types.FloorNumber"
+        },
+        "postalCode": {
+         "type": "Orders_types.PostalCode"
+        },
+        "city": {
+         "type": "Orders_types.City"
+        },
+        "country": {
+         "type": "Orders_types.Country"
+        },
+        "district": {
+         "type": "Orders_types.District"
+        },
+        "state": {
+         "type": "Orders_types.State"
+        },
+        "phone": {
+         "type": "Orders_types.Phone"
+        },
+        "email": {
+         "type": "Orders_types.Email"
+        },
+        "fax": {
+         "type": "Orders_types.Fax"
+        },
+        "additionalAddressInfo": {
+         "type": "Orders_types.AdditionalAddressInfo"
+        },
+        "correspondenceLanguage": {
+         "type": "Orders_types.CorrespondenceLanguage"
+        },
+        "poBox": {
+         "type": "Orders_types.PoBox"
+        }
+       }
+      }
+     }
+    },
+    "orderItems": {
+     "items": {
+      "elements": {
+       "id": {
+        "@description": "The unique identifier of the order item.",
+        "type": "cds.String",
+        "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+       },
+       "lineNumber": {
+        "@description": "The number representing the sequence of an order item within an order. For example, '1' is the value of the line number for the first order item within an order. <br>The maximum length of this field is determined by the fulfillment system. For example, '6' is the maximum length for SAP S/4HANA. <br>Note that the value cannot contain decimal places, or include more than 10 digits, 0, or a negative or duplicate value.",
+        "type": "cds.String",
+        "@assert.format": "^\\d{1,10}$"
+       },
+       "referenceId": {
+        "@description": "The unique ID for the order item in the external order capture system (for example, an online store) in which the order was originally placed.",
+        "type": "cds.String",
+        "length": 36
+       },
+       "parentReferenceId": {
+        "@description": "The reference ID of the higher-level (parent) item within a product hierarchy. This field is used for physical products when the item is a subitem as part of a hierarchical product.",
+        "type": "cds.String",
+        "length": 36
+       },
+       "itemType": {
+        "@description": "The item type, such as physical item (for physical products) or subscription item (for subscription products).",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "PHYSICAL": {},
+         "SUBSCRIPTION": {}
+        }
+       },
+       "quantity": {
+        "type": "Orders_types.Quantity"
+       },
+       "product": {
+        "elements": {
+         "name": {
+          "@description": "The name of the product.",
+          "type": "cds.String",
+          "length": 255
+         },
+         "externalSystemReference": {
+          "elements": {
+           "externalSystemId": {
+            "type": "Orders_types.ExternalSystemIdForProduct"
+           },
+           "externalId": {
+            "type": "Orders_types.ExternalIdForProduct"
+           }
+          }
+         }
+        }
+       },
+       "price": {
+        "@description": "The price for the product.",
+        "elements": {
+         "itemPriceType": {
+          "@description": "The price type classification that distinguishes between physical item pricing and subscription item pricing.",
+          "type": "cds.String",
+          "@assert.range": true,
+          "enum": {
+           "PHYSICAL": {},
+           "SUBSCRIPTION": {}
+          }
+         },
+         "aspectsData": {
+          "elements": {
+           "physicalItemPrice": {
+            "@description": "The pricing information for the physical items in an order.",
+            "elements": {
+             "priceTotals": {
+              "@description": "The price totals for the item.",
+              "items": {
+               "elements": {
+                "category": {
+                 "@description": "The category of the price totals. The category must be 'ONE_TIME'.",
+                 "type": "cds.String",
+                 "@assert.range": true,
+                 "enum": {
+                  "ONE_TIME": {}
+                 }
+                },
+                "originalAmount": {
+                 "@description": "The initial or base price of a product, comprising the unit price multiplied by the quantity. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "effectiveAmount": {
+                 "@description": "The original amount minus discounts. An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "finalAmount": {
+                 "@description": "The amount that the customer will be charged for the quantity ordered. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "discount": {
+                 "elements": {
+                  "totalAmount": {
+                   "@description": "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+                   "type": "cds.Double",
+                   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                   "@Core.Example.Value": 11.22
+                  },
+                  "lines": {
+                   "type": "Orders_types.DiscountLinesItem"
+                  }
+                 }
+                },
+                "tax": {
+                 "elements": {
+                  "totalAmount": {
+                   "@description": "The sum of all taxes applied. The maximum value is 9999999999999.999999.",
+                   "type": "cds.Double",
+                   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                   "@Core.Example.Value": 11.22
+                  },
+                  "lines": {
+                   "type": "Orders_types.TaxLines"
+                  }
+                 }
+                }
+               }
+              }
+             }
+            }
+           },
+           "subscriptionItemPrice": {
+            "@description": "The pricing information for subscription items in orders.",
+            "elements": {
+             "pricingStrategy": {
+              "@description": "Determines the pricing for a subscription item.",
+              "elements": {
+               "id": {
+                "@description": "The unique identifier of the pricing strategy.",
+                "type": "cds.String",
+                "length": 36,
+                "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+               },
+               "description": {
+                "@description": "The description of the pricing strategy.",
+                "type": "cds.String"
+               },
+               "period": {
+                "@description": "The duration for which the charge is applied, such as monthly.",
+                "type": "cds.String",
+                "@assert.range": true,
+                "enum": {
+                 "CALENDAR_MONTHLY": {},
+                 "ANNIVERSARY_MONTHLY": {},
+                 "CALENDAR_QUARTERLY": {},
+                 "ANNIVERSARY_QUARTERLY": {},
+                 "CALENDAR_HALF_YEARLY": {},
+                 "ANNIVERSARY_HALF_YEARLY": {},
+                 "CALENDAR_YEARLY": {},
+                 "ANNIVERSARY_YEARLY": {}
+                }
+               },
+               "prices": {
+                "items": {
+                 "elements": {
+                  "category": {
+                   "@description": "The price category.",
+                   "type": "cds.String",
+                   "@assert.range": true,
+                   "enum": {
+                    "ONE_TIME": {},
+                    "RECURRING": {},
+                    "USAGE": {}
+                   }
+                  },
+                  "amount": {
+                   "@description": "The numeric value indicating the price of an item.",
+                   "type": "cds.Double"
+                  },
+                  "metricId": {
+                   "@description": "The metric ID.",
+                   "type": "cds.String"
+                  },
+                  "blockSize": {
+                   "@description": "A value that determines the block size.",
+                   "type": "cds.Integer"
+                  },
+                  "includedQuantity": {
+                   "@description": "A value that represents the included quantity of a usage-based price type.",
+                   "type": "cds.Integer"
+                  },
+                  "billedInAdvance": {
+                   "@description": "A value that determines if a subscription is billed in advance.",
+                   "type": "cds.Boolean"
+                  }
+                 }
+                }
+               }
+              }
+             },
+             "priceTotals": {
+              "@description": "The price totals for the item.",
+              "items": {
+               "elements": {
+                "originalAmount": {
+                 "@description": "The initial or base price of a product, comprising the unit price multiplied by the quantity. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "effectiveAmount": {
+                 "@description": "The original amount minus discounts. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "finalAmount": {
+                 "@description": "The amount that the customer will be charged for the quantity ordered. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "category": {
+                 "@description": "The category of the prices which can be one-time, recurring, or recurring estimate.",
+                 "type": "cds.String",
+                 "@assert.range": true,
+                 "enum": {
+                  "ONE_TIME": {},
+                  "RECURRING": {},
+                  "RECURRING_ESTIMATE": {}
+                 }
+                },
+                "tax": {
+                 "elements": {
+                  "totalAmount": {
+                   "@description": "The sum of all taxes applied. The maximum value is 9999999999999.999999.",
+                   "type": "cds.Double",
+                   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                   "@Core.Example.Value": 11.22
+                  },
+                  "lines": {
+                   "type": "Orders_types.TaxLines"
+                  }
+                 }
+                },
+                "period": {
+                 "@description": "The duration for which the charge is applied when the category is recurring, such as monthly.",
+                 "type": "cds.String",
+                 "@assert.range": true,
+                 "enum": {
+                  "CALENDAR_MONTHLY": {},
+                  "ANNIVERSARY_MONTHLY": {},
+                  "CALENDAR_QUARTERLY": {},
+                  "ANNIVERSARY_QUARTERLY": {},
+                  "CALENDAR_HALF_YEARLY": {},
+                  "ANNIVERSARY_HALF_YEARLY": {},
+                  "CALENDAR_YEARLY": {},
+                  "ANNIVERSARY_YEARLY": {}
+                 }
+                }
+               }
+              }
+             }
+            }
+           }
+          }
+         }
+        }
+       },
+       "fulfillment": {
+        "@description": "The fulfillment information from the fulfillment system for the order item.",
+        "elements": {
+         "shipment": {
+          "@description": "The shipment information for the order item. Note that this information reflects the shipment information from the fulfillment system.",
+          "elements": {
+           "shippingDate": {
+            "@description": "The most recent date and time at which a certain quantity of a product ordered is shipped to the customer. For example, if a customer orders three hinges and two hinges have been shipped, this date reflects the most recent shipping date. The date will be updated when the final hinge is shipped.",
+            "type": "cds.Timestamp"
+           },
+           "deliveryDate": {
+            "@description": "The most recent date and time at which the customer receives a certain quantity of a product ordered. For example, if a customer orders three hinges and two hinges have been delivered, this date reflects the most recent delivery date. The date will be updated when the final hinge is delivered to the customer.",
+            "type": "cds.Timestamp"
+           },
+           "fullyShipped": {
+            "@description": "The flag to indicate whether the full quantity of an item ordered has been shipped to the customer. Note that the status of this attribute is only updated to ''true'' when confirmation is received from the Order Activities API that the item has been fully shipped. Until that point, the Orders API has no information about the item shipment status and it cannot be inferred.",
+            "type": "cds.Boolean"
+           },
+           "fullyDelivered": {
+            "@description": "The flag to indicate whether the full quantity of an item ordered has been delivered to the customer. Note that the status of this attribute is only updated to ''true'' when confirmation is received from the Order Activities API that the item has been fully delivered. Until that point, the Orders API has no information about the item delivery status and it cannot be inferred.",
+            "type": "cds.Boolean"
+           }
+          }
+         },
+         "cancellation": {
+          "@description": "The cancellation information for the order item.",
+          "elements": {
+           "cancellationDate": {
+            "@description": "The date and time at which the order item was canceled by the fulfillment system.",
+            "type": "cds.Timestamp"
+           },
+           "canceled": {
+            "@description": "The flag to indicate whether the order item was canceled during the fulfillment process.",
+            "type": "cds.Boolean"
+           }
+          }
+         },
+         "fulfillmentRequests": {
+          "@description": "The list of fulfillment requests associated with the order item.",
+          "items": {
+           "elements": {
+            "id": {
+             "@description": "The unique identifier of the fulfillment request.",
+             "type": "cds.String",
+             "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+            },
+            "quantityValue": {
+             "@description": "The quantity value for the fulfillment request.",
+             "type": "cds.Decimal"
+            }
+           }
+          }
+         }
+        }
+       },
+       "followOnDocuments": {
+        "@description": "Information about the follow-on document for the order item. The follow-on document can be, for example, a sales order in SAP S/4HANA.",
+        "elements": {
+         "externalSystemReferences": {
+          "items": {
+           "elements": {
+            "externalSystemId": {
+             "type": "Orders_types.ExternalSystemIdForFollowOnDocuments"
+            },
+            "externalId": {
+             "type": "Orders_types.ExternalIdForFollowOnDocuments"
+            },
+            "externalNumber": {
+             "@description": "The external document number for a follow-on document.",
+             "type": "cds.String",
+             "length": 255
+            },
+            "externalUrl": {
+             "@description": "The url to the follow-on document on the fulfillment system.",
+             "type": "cds.String",
+             "length": 255
+            },
+            "dispatchedItemQuantity": {
+             "type": "Orders_types.Quantity"
+            },
+            "type": {
+             "@description": "The follow-on document type.",
+             "type": "cds.String",
+             "length": 50
+            },
+            "externalItemId": {
+             "@description": "The unique identifier of the external item for a follow-on document.",
+             "type": "cds.String",
+             "length": 255
+            },
+            "externalItemNumber": {
+             "@description": "The external item number for a follow-on document.",
+             "type": "cds.String",
+             "length": 255
+            },
+            "fulfillmentRequestId": {
+             "@description": "The unique identifier of the fulfillment request for a follow-on document.",
+             "type": "cds.String",
+             "length": 36
+            },
+            "fulfillmentRequestItemId": {
+             "@description": "The unique identifier of the fulfillment request item for a follow-on document.",
+             "type": "cds.String",
+             "length": 36
+            },
+            "activityId": {
+             "@description": "The unique identifier of the activity for a follow-on document.",
+             "type": "cds.String",
+             "length": 36
+            }
+           }
+          }
+         }
+        }
+       },
+       "aspectsData": {
+        "@description": "Only relevant for subscription items.",
+        "elements": {
+         "subscriptionItem": {
+          "@description": "The information for a subscription item in an order.",
+          "elements": {
+           "validFrom": {
+            "@description": "The start of the validity period for subscription items.",
+            "type": "cds.Timestamp"
+           },
+           "validTo": {
+            "@description": "The end of the validity period for subscription items.",
+            "type": "cds.Timestamp"
+           },
+           "contractTerm": {
+            "@description": "The information for the contract term for a subscription item. This represents the minimum contract term of the subscription. During the minimum term, the subscription cannot be canceled.",
+            "elements": {
+             "period": {
+              "@description": "The period of the minimum contract term in months.",
+              "type": "cds.Integer"
+             },
+             "endDate": {
+              "@description": "The end date of the minimum contract term for a subscription item.",
+              "type": "cds.Timestamp"
+             }
+            }
+           },
+           "renewalTerm": {
+            "@description": "The period by which the subscription automatically extends after the minimum contract term.",
+            "elements": {
+             "period": {
+              "@description": "The length of the renewal term in months.",
+              "type": "cds.Integer"
+             }
+            }
+           },
+           "cancellationPolicy": {
+            "@description": "Information for the cancellation.",
+            "elements": {
+             "allowMidBillCycleExpiration": {
+              "@description": "The flag to determine whether a subscription may expire in the middle of a billing cycle.",
+              "type": "cds.Boolean"
+             },
+             "termOfNotice": {
+              "@description": "The period of time to be observed if a customer wants to cancel a subscription.",
+              "type": "cds.Integer"
+             }
+            }
+           },
+           "overwriteContractTerm": {
+            "@description": "The flag to determine whether the subscription terms predefined in the product can be overwritten.",
+            "type": "cds.Boolean"
+           },
+           "calculateSubscriptionEndDate": {
+            "@description": "The flag to enable the calculation of the subscription end date.",
+            "type": "cds.Boolean"
+           },
+           "numberOfWaiverPeriods": {
+            "@description": "The number of billing cycles for which recurring charges are waived after the start of the subscription.",
+            "type": "cds.Integer"
+           },
+           "periodicity": {
+            "@description": "The duration for which the charge is applied, such as monthly.",
+            "type": "cds.String",
+            "@assert.range": true,
+            "enum": {
+             "CALENDAR_MONTHLY": {},
+             "ANNIVERSARY_MONTHLY": {},
+             "CALENDAR_QUARTERLY": {},
+             "ANNIVERSARY_QUARTERLY": {},
+             "CALENDAR_HALF_YEARLY": {},
+             "ANNIVERSARY_HALF_YEARLY": {},
+             "CALENDAR_YEARLY": {},
+             "ANNIVERSARY_YEARLY": {}
+            }
+           }
+          }
+         }
+        }
+       },
+       "customFields": {
+        "@description": "Customized data that must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information.",
+        "elements": {}
+       }
+      }
+     }
+    },
+    "sourcing": {
+     "@description": "The sourcing-related information for an order. Sourcing defines the shipping and delivery process of how products reach customers. Note that if your solution offers the sale of physical and subscription products, you must provide a fulfillment site for both types of products, and the shipments must include a shipment item for each order item (physical item or subscription item).",
+     "elements": {
+      "reservation": {
+       "type": "Orders_types.Reservation"
+      },
+      "shipments": {
+       "@description": "A grouping of products from a customer's order that will be shipped from the same fulfillment site as determined by the sourcing solution. Note that the information in this field reflects the shipment as determined by the integrated sourcing solution; the actual shipments created by the fulfillment system may differ.",
+       "items": {
+        "elements": {
+         "id": {
+          "@description": "The unique identifier of the shipment assigned by SAP Order Management foundation.",
+          "type": "cds.UUID"
+         },
+         "fulfillmentSite": {
+          "@description": "The site from which a product is shipped to the customer, for example, a store, distribution center, or vendor. Note that the information in this field reflects the fulfillment site as determined by the integrated sourcing solution; the actual fulfillment site selected by the fulfillment system may differ.<br> Note that fulfillment site information must be provided for all shipments, or none of the shipments. ",
+          "elements": {
+           "id": {
+            "@description": "The unique identifier of the site from which a product is shipped. For example, if you are using SAP S/4HANA as your fulfillment system, the value must match the plant ID for the physical products in the order. If drop-ship delivery is used, the value must match the purchasing plant ID for the physical products in the order.",
+            "type": "cds.String",
+            "length": 36
+           },
+           "dropShipId": {
+            "@description": "The vendor ID for the fulfillment site when drop-ship delivery is used.",
+            "type": "cds.String",
+            "length": 36
+           }
+          }
+         },
+         "expectedShippingDate": {
+          "@description": "The date on which the full shipment is expected to be shipped.",
+          "type": "cds.Timestamp"
+         },
+         "reservation": {
+          "type": "Orders_types.Reservation"
+         },
+         "delivery": {
+          "@description": "The delivery-related information for an order. Delivery refers to the point when a customer receives a product ordered.",
+          "elements": {
+           "deliveryOption": {
+            "@description": "An available method of delivery that determines how a product will reach a customer, for example, same-day shipping, standard shipping, store pickup, and so on.",
+            "type": "cds.String",
+            "length": 50
+           },
+           "expectedDeliveryDate": {
+            "@description": "The date on which the full shipment is expected to be delivered.",
+            "type": "cds.Timestamp"
+           }
+          }
+         },
+         "items": {
+          "@description": "The products to be shipped to the customer. Each shipment item must have a corresponding order item within the order, and vice versa.",
+          "items": {
+           "elements": {
+            "referenceId": {
+             "@description": "The unique ID for the order item in the external order capture system (for example, an online store) in which the order was originally placed. This must match the order item reference ID within the order item list.",
+             "type": "cds.String",
+             "length": 36
+            },
+            "quantity": {
+             "type": "Orders_types.Quantity"
+            }
+           }
+          }
+         },
+         "customFields": {
+          "@description": "Customized data that must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information.",
+          "elements": {}
+         }
+        }
+       }
+      }
+     }
+    },
+    "transferHoldEndAt": {
+     "@description": "The date and time when the order can be sent for orchestration. This only applies when you set up the transfer hold in Business Configuration.",
+     "type": "cds.Timestamp"
+    },
+    "customFields": {
+     "@description": "Customized data that must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information.",
+     "elements": {}
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.Person": {
+   "@description": "The person's names and titles.",
+   "elements": {
+    "firstName": {
+     "@description": "The person's first (given) name.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "middleName": {
+     "@description": "The person's middle name.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "lastName": {
+     "@description": "The person's last (family) name.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "academicTitle": {
+     "@description": "The person's academic title, for example, Dr.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "salutationCode": {
+     "@description": "The code of the salutation for the person.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "name": {
+     "@description": "The person's full name.",
+     "type": "cds.String"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.Quantity": {
+   "elements": {
+    "value": {
+     "@description": "The quantity of an item ordered.",
+     "type": "cds.Decimal"
+    },
+    "unit": {
+     "@description": "The code for the unit of measure in which typically the stock of a product is managed.",
+     "type": "cds.String",
+     "length": 3
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.ExternalSystemIdForProduct": {
+   "@description": "The ID of the product data system.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalIdForProduct": {
+   "@description": "The product ID from the external system.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalSystemIdForFollowOnDocuments": {
+   "@description": "The unique identifier of the external system for a follow-on document.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalIdForFollowOnDocuments": {
+   "@description": "The unique identifier of a follow-on document.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalSystemIdForPrecedingDocument": {
+   "@description": "The ID of the external system where the preceding document was created.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalIdForPrecedingDocument": {
+   "@description": "The preceding document ID from the external system.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalSystemId": {
+   "@description": "The ID of the external system that provides the customer data.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.ExternalId": {
+   "@description": "The customer ID from the external system.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.Street": {
+   "@description": "The street name of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "6th Street",
+   "kind": "type"
+  },
+  "Orders_types.HouseNumber": {
+   "@description": "The house number of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "44",
+   "kind": "type"
+  },
+  "Orders_types.Building": {
+   "@description": "The building of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "43",
+   "kind": "type"
+  },
+  "Orders_types.RoomNumber": {
+   "@description": "The room number of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "22",
+   "kind": "type"
+  },
+  "Orders_types.FloorNumber": {
+   "@description": "The floor number of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "2",
+   "kind": "type"
+  },
+  "Orders_types.PostalCode": {
+   "@description": "The postal code of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "69190",
+   "kind": "type"
+  },
+  "Orders_types.City": {
+   "@description": "The city of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "New York",
+   "kind": "type"
+  },
+  "Orders_types.Country": {
+   "@description": "The country or region of the address. Only the two-letter ISO country or region code (ISO 3166-1) is accepted, for example, 'DE', 'US', or 'CA'.",
+   "type": "cds.String",
+   "length": 2,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "US",
+   "kind": "type"
+  },
+  "Orders_types.District": {
+   "@description": "The district of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "District 52",
+   "kind": "type"
+  },
+  "Orders_types.State": {
+   "@description": "The state of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "NY",
+   "kind": "type"
+  },
+  "Orders_types.Phone": {
+   "@description": "The contact phone number.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "5145555555",
+   "kind": "type"
+  },
+  "Orders_types.Email": {
+   "@description": "The contact email address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "example@something.com",
+   "kind": "type"
+  },
+  "Orders_types.Fax": {
+   "@description": "The contact fax number.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "5557891234",
+   "kind": "type"
+  },
+  "Orders_types.AdditionalAddressInfo": {
+   "@description": "Additional address information.",
+   "type": "cds.String",
+   "length": 255,
+   "kind": "type"
+  },
+  "Orders_types.CorrespondenceLanguage": {
+   "@description": "The correspondence language for the customer.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "en",
+   "kind": "type"
+  },
+  "Orders_types.PoBox": {
+   "@description": "The post office box number of the address.",
+   "type": "cds.String",
+   "length": 255,
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "PoBox",
+   "kind": "type"
+  },
+  "Orders_types.Tax": {
+   "elements": {
+    "totalAmount": {
+     "@description": "The sum of all taxes applied. The maximum value is 9999999999999.999999.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22
+    },
+    "lines": {
+     "type": "Orders_types.TaxLines"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.TaxLines": {
+   "@description": "Information about the taxes applied.",
+   "items": {
+    "elements": {
+     "code": {
+      "@description": "The tax code.",
+      "type": "cds.String",
+      "length": 255,
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": "code"
+     },
+     "name": {
+      "@description": "The name of the tax.",
+      "type": "cds.String",
+      "length": 255,
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": "name"
+     },
+     "amount": {
+      "@description": "The tax amount. The maximum value is 9999999999999.999999.",
+      "type": "cds.Double",
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": 11.22
+     },
+     "rate": {
+      "@description": "The tax rate, expressed as a percentage.",
+      "type": "cds.Double",
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": 50
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.BaseDiscountLine": {
+   "elements": {
+    "amount": {
+     "@description": "The amount of the discount.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22
+    },
+    "sequenceNumber": {
+     "@description": "The position of this discount in the sequence of discounts applied to the item.",
+     "type": "cds.Integer"
+    },
+    "basedOn": {
+     "@description": "The preceding sequence number, on which the current discount is applied. If the discount is the first applied in the sequence, the value of this field should be null.",
+     "type": "cds.Integer"
+    },
+    "rate": {
+     "@description": "The discount rate, expressed as a percentage.",
+     "type": "cds.Double"
+    },
+    "promotionId": {
+     "@description": "The promotion ID.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "promotionDescription": {
+     "@description": "The promotion description.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "externalPromotionType": {
+     "@description": "The promotion type.",
+     "type": "cds.String",
+     "length": 255
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.DiscountLinesHeader": {
+   "@description": "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+   "items": {
+    "type": "Orders_types.BaseDiscountLine"
+   },
+   "kind": "type"
+  },
+  "Orders_types.DiscountLinesItem": {
+   "@description": "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+   "items": {
+    "type": "Orders.anonymous.type2"
+   },
+   "kind": "type"
+  },
+  "Orders_types.Reservation": {
+   "@description": "The reservation information from the sourcing solution for the order items. This reserves the products at a specific fulfillment site to ensure that they will be available for shipping. The reservation can be included at header or shipment level.<br>Header level: The reservation information is available at the header level if full or partial sourcing information is present in the order create request. In this case, the reservation applies to the full or partial quantity of order items that include a fulfillment site in the shipment information.<br>Shipment level: The reservation information is available at shipment level if your sourcing system is integrated directly with SAP Order Management foundation and the full sourcing information is not received in the order create request. In this case, the missing reservation information is retrieved and stored at the shipment level.",
+   "elements": {
+    "id": {
+     "@description": "The unique identifier of the sourcing reservation for all products in the order.",
+     "type": "cds.String",
+     "length": 36
+    },
+    "status": {
+     "@description": "The status of the sourcing reservation in SAP Order Management foundation.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "PENDING": {},
+      "CONFIRMED": {},
+      "CONFIRMATION_FAILED": {},
+      "DELETED": {},
+      "DELETION_FAILED": {}
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.extendTransferHoldRequest": {
+   "@description": "The request to extend or reduce the transfer hold for an order. This can only be applied to orders in status `TRANSFER_ON_HOLD`. In addition, the extension time can’t be changed 30 seconds before the transfer hold is set to end.<br>You can set a new transfer hold duration by increasing or decreasing the value of the extensionTime field. This can be done multiple times, with each update changing the value of the transferHoldEndAt field accordingly. The transfer hold can be extended up to a maximum total of 365 days after order creation, or reduced until the current time. The increase or reduction is entered in minutes and can be between -525600 and 525600 (365 days in minutes). Note that you can’t enter “0” as the value for the extensionTime field.<ul>When you increase the transfer hold duration by entering a positive value in the extensionTime field, the request will fail in the following cases:<li>The value entered is greater than 525600 (365 days).</li><li>The updated value of the transferHoldEndAt field after the extensionTime is increased is more than 365 days after the order creation date.</li></ul><ul>When you decrease the transfer hold duration by entering a negative number in the extensionTime field, the API behaves as follows:<li>If the extension time is less than -525600 (example: -525601), the request will fail.</li><li>If the extension time entered sets the value of the transferHoldEndAt field in the past (before the current time), the current time is used and the order is sent immediately for processing.</li></ul> <p>Note that the full request cannot exceed 2 MB.</p>",
+   "elements": {
+    "transferHoldExtensionDuration": {
+     "@description": "The duration in minutes of the transfer hold extension for an order. This value is set in the Market settings in Business Configuration but can be manually changed in the request.",
+     "type": "cds.Integer"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.ErrorWrapper": {
+   "elements": {
+    "error": {
+     "type": "Orders_types.ErrorResponse"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.ErrorResponse": {
+   "@description": "Wrapper for error responses.",
+   "elements": {
+    "code": {
+     "@description": "The code for the error.",
+     "type": "cds.String",
+     "@assert.format": "^[0-9]{4}-[0-9]{3}$",
+     "@mandatory": true
+    },
+    "message": {
+     "@description": "A descriptive error message.",
+     "type": "cds.String",
+     "@mandatory": true
+    },
+    "status": {
+     "@description": "HTTP Status Code",
+     "type": "cds.Integer"
+    },
+    "details": {
+     "@description": "This property is defined recursively. Its items are themselves errors. The inner details explain why the outer error occurred.",
+     "items": {
+      "type": "Orders_types.ErrorResponseDetail"
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.ErrorResponseDetail": {
+   "@description": "The details of the error.",
+   "elements": {
+    "code": {
+     "@description": "The code for the error.",
+     "type": "cds.String",
+     "@assert.format": "^[0-9]{4}-[0-9]{3}$"
+    },
+    "message": {
+     "@description": "A descriptive error message.",
+     "type": "cds.String"
+    },
+    "target": {
+     "@description": "The specific place in the schema where the error occurred.",
+     "type": "cds.String"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.UpdateOrderRequestBodySchema": {
+   "elements": {},
+   "@openapi.oneOf": "[{\"$ref\":\"#/components/schemas/orderUpdateRequest\"},{\"$ref\":\"#/components/schemas/orderCancelRequest\"},{\"$ref\":\"#/components/schemas/orderCancelDuringProcessingRequest\"},{\"$ref\":\"#/components/schemas/orderChangeHeaderDuringProcessingRequest\"},{\"$ref\":\"#/components/schemas/orderChangeItemDuringProcessingRequest\"},{\"$ref\":\"#/components/schemas/orderRetriggerRequest\"}]",
+   "@open": true,
+   "kind": "type"
+  },
+  "Orders_types.orderUpdateRequest": {
+   "@title": "orderUpdateRequest",
+   "@description": "The payload for changing an order during the transfer hold period. The changes you can make are limited to the fields in this schema. Note that if you make changes to the information in the following elements of the payload, you must send all the information within the element, even the unchanged values: \n-\t payment\n-\t fees\n-\t orderItems\n-\t shipments\n \n In addition, if the original order payload contained information in the fees or payment element, this information must be included in the order change request to ensure financial accuracy.",
+   "elements": {
+    "action": {
+     "@description": "The action to be performed. The value for this field must be 'UPDATE'.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "UPDATE": {}
+     },
+     "@mandatory": true
+    },
+    "payment": {
+     "type": "Orders_types.paymentInRequest"
+    },
+    "pricingDate": {
+     "@description": "The date and time used to determine the price for the subscription. Note that this field is only relevant for subscription items.",
+     "type": "Orders_types.datetimeString"
+    },
+    "fees": {
+     "type": "Orders_types.feesInRequest"
+    },
+    "sourcing": {
+     "@description": "The sourcing-related information for an order. Sourcing defines the shipping and delivery process of how products reach customers. Note that if your solution offers the sale of physical and subscription products, you must provide a fulfillment site for both types of products, and the shipments must include a shipment item for each order item (physical item or subscription item). If you include only partial sourcing information in your payload, SAP Order Management foundation calls an integrated sourcing system if you’ve enabled this option in the Integration Settings or the market in Business Configuration.",
+     "elements": {
+      "reservation": {
+       "@description": "The reservation information from the sourcing solution for the order items. This reserves the products at a specific fulfillment site to ensure that they will be available for shipping.<br> Ensure that you have provided the corresponding fulfillment site information in the shipment when using this field.",
+       "elements": {
+        "id": {
+         "@description": "The unique identifier of the sourcing reservation for all products in the order.",
+         "type": "cds.String",
+         "length": 36
+        }
+       }
+      },
+      "shipments": {
+       "type": "Orders_types.sourcingShipmentsRequest"
+      }
+     }
+    },
+    "orderItems": {
+     "items": {
+      "elements": {
+       "id": {
+        "@description": "The unique identifier of the order item. You must provide this value if you are changing an existing item, for example, changing the item's quantity. NOTE: Do not include the item ID if you are adding an item, as this will cause the order change to fail.",
+        "type": "cds.String",
+        "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+       },
+       "lineNumber": {
+        "@description": "The number representing the sequence of an order item within an order. For example, '1' is the value of the line number for the first order item within an order. <br>The maximum length of this field is determined by the fulfillment system. For example, '6' is the maximum length for SAP S/4HANA. <br>Note that the value cannot contain decimal places, or include more than 10 digits, 0, or a negative or duplicate value.",
+        "type": "cds.String",
+        "@assert.format": "^\\d{1,10}$"
+       },
+       "referenceId": {
+        "@description": "The unique ID for the order item in the external order capture system (for example, an online store) in which the order was originally placed. This field is required if you are using sourcing.",
+        "type": "cds.String",
+        "length": 36
+       },
+       "parentReferenceId": {
+        "@description": "The reference ID of the higher-level (parent) item within a product hierarchy. This field is used for physical products when the item is a subitem as part of a hierarchical product.",
+        "type": "cds.String",
+        "length": 36
+       },
+       "product": {
+        "elements": {
+         "name": {
+          "@description": "The name of the product.",
+          "type": "cds.String",
+          "length": 255
+         },
+         "externalSystemReference": {
+          "elements": {
+           "externalSystemId": {
+            "@description": "The ID of the external system.",
+            "type": "cds.String",
+            "length": 255,
+            "@mandatory": true
+           },
+           "externalId": {
+            "@description": "The product ID from the external system.",
+            "type": "cds.String",
+            "length": 255,
+            "@mandatory": true
+           }
+          }
+         }
+        },
+        "@mandatory": true
+       },
+       "quantity": {
+        "type": "Orders_types.quantityInOrderCreateRequest",
+        "@mandatory": true
+       },
+       "itemType": {
+        "@description": "The item type, such as physical item (for physical products) or subscription item (for subscription products).",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "PHYSICAL": {},
+         "SUBSCRIPTION": {}
+        },
+        "@mandatory": true
+       },
+       "price": {
+        "@description": "The price for the product. This field is only relevant for physical items.",
+        "elements": {
+         "aspectsData": {
+          "elements": {
+           "physicalItemPrice": {
+            "@description": "The pricing information for the physical items in an order. Physical items must have the same pricing and tax structure. For example, if fields for 'item A' are complete, then all subsequent items and the respective fields must be complete. Likewise for taxes (which are optional); if one item contains tax information, then all items must contain the same tax information.",
+            "elements": {
+             "priceTotals": {
+              "@description": "The price totals for the item.",
+              "items": {
+               "elements": {
+                "category": {
+                 "@description": "The category of the price totals. The category must be 'ONE_TIME'.",
+                 "type": "cds.String",
+                 "@assert.range": true,
+                 "enum": {
+                  "ONE_TIME": {}
+                 },
+                 "@mandatory": true
+                },
+                "originalAmount": {
+                 "@description": "The initial or base price of a product, comprising the unit price multiplied by the quantity. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22,
+                 "@mandatory": true
+                },
+                "effectiveAmount": {
+                 "@description": "The original amount minus discounts. An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "finalAmount": {
+                 "@description": "The amount that the customer will be charged for the quantity ordered. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+                 "type": "cds.Double",
+                 "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+                 "@Core.Example.Value": 11.22
+                },
+                "discount": {
+                 "type": "Orders_types.itemDiscountInRequest"
+                },
+                "tax": {
+                 "type": "Orders_types.taxInRequest"
+                }
+               }
+              },
+              "@mandatory": true
+             }
+            },
+            "@mandatory": true
+           }
+          }
+         }
+        }
+       },
+       "aspectsData": {
+        "@description": "Only relevant for subscription items.",
+        "elements": {
+         "subscriptionItem": {
+          "@description": "The information for a subscription item in an order.",
+          "elements": {
+           "validFrom": {
+            "@description": "The start of the validity period for subscription items.",
+            "type": "Orders_types.datetimeString",
+            "@mandatory": true
+           },
+           "validTo": {
+            "@description": "The end of the validity period for subscription items.",
+            "type": "Orders_types.datetimeString"
+           },
+           "contractTerm": {
+            "@description": "The information for the contract term for a subscription item. This represents the minimum contract term of the subscription. During the minimum term, the subscription cannot be canceled.",
+            "elements": {
+             "period": {
+              "@description": "The period of the minimum contract term in months.",
+              "type": "cds.Integer"
+             },
+             "endDate": {
+              "@description": "The end date of the minimum contract term for a subscription item.",
+              "type": "cds.Timestamp"
+             }
+            }
+           },
+           "renewalTerm": {
+            "@description": "The period by which the subscription automatically extends after the minimum contract term.",
+            "elements": {
+             "period": {
+              "@description": "The length of the renewal term in months.",
+              "type": "cds.Integer"
+             }
+            }
+           },
+           "cancellationPolicy": {
+            "@description": "Information for the cancellation.",
+            "elements": {
+             "allowMidBillCycleExpiration": {
+              "@description": "The flag to determine whether a subscription may expire in the middle of a billing cycle.",
+              "type": "cds.Boolean"
+             },
+             "termOfNotice": {
+              "@description": "The period of time to be observed if a customer wants to cancel a subscription.",
+              "type": "cds.Integer"
+             }
+            }
+           },
+           "overwriteContractTerm": {
+            "@description": "The flag to determine whether the subscription terms predefined in the product can be overwritten.",
+            "type": "cds.Boolean"
+           },
+           "calculateSubscriptionEndDate": {
+            "@description": "The flag to enable the calculation of the subscription end date.",
+            "type": "cds.Boolean"
+           },
+           "numberOfWaiverPeriods": {
+            "@description": "The number of billing cycles for which recurring charges are waived after the start of the subscription.",
+            "type": "cds.Integer"
+           }
+          },
+          "@mandatory": true
+         }
+        }
+       },
+       "customFields": {
+        "type": "Orders_types.customFieldsInRequest"
+       }
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.customFieldsInRequest": {
+   "@description": "Customized data that must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information. Note that the full request cannot exceed 2 MB. Keep this in mind when determining how much data you include in your custom fields.",
+   "elements": {},
+   "kind": "type"
+  },
+  "Orders_types.orderCancelRequest": {
+   "@title": "orderCancelRequest",
+   "@description": "The payload for canceling a full order.",
+   "elements": {
+    "action": {
+     "@description": "The action to be performed. The value for this field must be 'CANCEL'.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "CANCEL": {}
+     },
+     "@mandatory": true
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderCancelDuringProcessingRequest": {
+   "@title": "orderCancelDuringProcessingRequest",
+   "@description": "The payload for canceling a full order during processing.",
+   "elements": {
+    "action": {
+     "@description": "The action to be performed. The value for this field must be 'CANCEL_DURING_PROCESSING'.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "CANCEL_DURING_PROCESSING": {}
+     },
+     "@mandatory": true
+    },
+    "actionReasonCode": {
+     "type": "Orders_types.orderCancelDuringProcessingRequestActionReasonCode"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderCancelDuringProcessingRequestActionReasonCode": {
+   "@description": "The reason code for the cancellation. The reason codes are defined in Business Configuration to provide insight as to why an order was canceled during processing. The code can be a maximum of four characters. If provided, the code must be present in Business Configuration or order cancellation will fail.",
+   "type": "cds.String",
+   "length": 4,
+   "@assert.format": "^.{1,4}$",
+   "kind": "type"
+  },
+  "Orders_types.orderChangeHeaderDuringProcessingRequest": {
+   "@title": "orderChangeHeaderDuringProcessingRequest",
+   "@description": "The payload for changing the header-level information in an order during the processing phase. The change can be applied to certain fields within the customer, shipToParty, and customFields structures. You can change an order when it is in status `TRANSFER_SUCCESSFUL`, `CANCELED`, or `CANCELED_DURING_PROCESSING`.",
+   "elements": {
+    "action": {
+     "@description": "The action to be performed. The value for this field must be 'CHANGE_HEADER_DURING_PROCESSING'.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "CHANGE_HEADER_DURING_PROCESSING": {}
+     },
+     "@mandatory": true
+    },
+    "actionReasonCode": {
+     "type": "Orders_types.orderChangeDuringProcessingRequestActionReasonCode"
+    },
+    "customer": {
+     "type": "Orders_types.orderChangeHeaderDuringProcessingRequestCustomer"
+    },
+    "shipToParty": {
+     "type": "Orders_types.orderChangeHeaderDuringProcessingRequestShipToParty"
+    },
+    "customFields": {
+     "type": "Orders_types.orderChangeHeaderDuringProcessingRequestCustomFields"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderChangeDuringProcessingRequestActionReasonCode": {
+   "@description": "The reason code for the order change. The reason codes are defined in Business Configuration to provide insight as to why the change to an order was made during processing. The code can be a maximum of   four characters. If provided, the code must be present in Business Configuration or the order change will fail.",
+   "type": "cds.String",
+   "length": 4,
+   "@assert.format": "^.{1,4}$",
+   "kind": "type"
+  },
+  "Orders_types.orderChangeHeaderDuringProcessingRequestCustomer": {
+   "@description": "The customer information for the order change.",
+   "elements": {
+    "person": {
+     "type": "Orders_types.Person"
+    },
+    "company": {
+     "@description": "The company name of the individual customer.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "addresses": {
+     "items": {
+      "type": "Orders.anonymous.type3"
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderChangeHeaderDuringProcessingRequestShipToParty": {
+   "@description": "The ship-to party information for the order change.",
+   "elements": {
+    "person": {
+     "type": "Orders_types.Person"
+    },
+    "company": {
+     "@description": "The company name of the ship-to party.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "address": {
+     "@description": "The address information for the order.",
+     "elements": {
+      "street": {
+       "type": "Orders_types.Street"
+      },
+      "houseNumber": {
+       "type": "Orders_types.HouseNumber"
+      },
+      "building": {
+       "type": "Orders_types.Building"
+      },
+      "roomNumber": {
+       "type": "Orders_types.RoomNumber"
+      },
+      "floorNumber": {
+       "type": "Orders_types.FloorNumber"
+      },
+      "postalCode": {
+       "type": "Orders_types.PostalCode"
+      },
+      "city": {
+       "type": "Orders_types.City"
+      },
+      "country": {
+       "type": "Orders_types.Country"
+      },
+      "district": {
+       "type": "Orders_types.District"
+      },
+      "state": {
+       "type": "Orders_types.State"
+      },
+      "phone": {
+       "type": "Orders_types.Phone"
+      },
+      "email": {
+       "type": "Orders_types.Email"
+      },
+      "fax": {
+       "type": "Orders_types.Fax"
+      },
+      "additionalAddressInfo": {
+       "type": "Orders_types.AdditionalAddressInfo"
+      },
+      "correspondenceLanguage": {
+       "type": "Orders_types.CorrespondenceLanguage"
+      },
+      "poBox": {
+       "type": "Orders_types.PoBox"
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderChangeHeaderDuringProcessingRequestCustomFields": {
+   "@description": "Customized data that must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information.",
+   "elements": {},
+   "kind": "type"
+  },
+  "Orders_types.orderChangeItemDuringProcessingRequest": {
+   "@title": "orderChangeItemDuringProcessingRequest",
+   "@description": "The payload for changing an order item during processing. The change can entail canceling an item, reducing the quantity of an item ordered, increasing the quantity of an item ordered, or adding an item. Note that sourcing is required when adding a new item. Note that in the case of a quantity change (reduction or increase), each unit of the item ordered must be included in a single shipment. For example, an item's quantity can't be changed if a customer orders three units of Item A, and two units are included in Shipment 1 while one unit is present in Shipment 2. You can change an order when it is in status `TRANSFER_STARTED`, `TRANSFER_SUCCESSFUL`, `TRANSFER_FAILED`, or `TRANSFER_PARTIALLY_FAILED`.",
+   "elements": {
+    "action": {
+     "@description": "The action to be performed. The value for this field must be 'CHANGE_ITEM_DURING_PROCESSING'.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "CHANGE_ITEM_DURING_PROCESSING": {}
+     },
+     "@mandatory": true
+    },
+    "payment": {
+     "type": "Orders_types.paymentInRequest"
+    },
+    "fees": {
+     "type": "Orders_types.feesInRequest"
+    },
+    "discount": {
+     "type": "Orders_types.headerDiscountInRequestOrResponse"
+    },
+    "sourcing": {
+     "@description": "The sourcing-related information for the added items. Sourcing defines the shipping and delivery process of the new items. Each added item (identified by a reference ID) must appear in exactly one shipment. An item's quantity cannot be split into multiple shipments.",
+     "elements": {
+      "shipments": {
+       "items": {
+        "type": "Orders.anonymous.type4"
+       },
+       "@mandatory": true
+      }
+     }
+    },
+    "orderItems": {
+     "items": {
+      "type": "Orders.anonymous.type5"
+     },
+     "@mandatory": true
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderChangeItemDuringProcessingRequestExistingItem": {
+   "@description": "An existing order item to be modified. For example, you can cancel the item, decrease or increase its quantity, or update its price.",
+   "elements": {
+    "id": {
+     "type": "Orders_types.orderChangeItemDuringProcessingRequestId",
+     "@mandatory": true
+    },
+    "canceled": {
+     "@description": "Flag to mark the item for cancellation.",
+     "type": "cds.Boolean"
+    },
+    "actionReasonCode": {
+     "type": "Orders_types.orderChangeDuringProcessingRequestActionReasonCode"
+    },
+    "quantity": {
+     "elements": {
+      "value": {
+       "@description": "The quantity of an item ordered. The number can be an integer or a decimal (for example, 1 or 1.5 tons). A maximum of 10 digits is allowed before the decimal point, and a maximum of three digits (decimal places) is allowed after. A maximum of 13 digits is allowed when the value does not contain a decimal point. <br>If you are using SAP Subscription Billing, the value must be an integer no less than 1, and must not exceed 9999.",
+       "type": "cds.Decimal",
+       "@mandatory": true
+      }
+     }
+    },
+    "price": {
+     "type": "Orders_types.orderChangeItemDuringProcessingRequestPrice"
+    },
+    "customFields": {
+     "type": "Orders_types.orderChangeItemDuringProcessingRequestCustomFields"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderChangeItemDuringProcessingRequestNewItem": {
+   "@description": "A new item to be added to the order.",
+   "elements": {
+    "lineNumber": {
+     "@description": "The number representing the sequence of the added item within the order.",
+     "type": "cds.String",
+     "@assert.format": "^\\d{1,10}$"
+    },
+    "referenceId": {
+     "@description": "The unique ID for the added item in the external order capture system.",
+     "type": "cds.String",
+     "length": 36
+    },
+    "parentReferenceId": {
+     "@description": "The reference ID of the parent order item.",
+     "type": "cds.String",
+     "length": 36
+    },
+    "fulfillment": {
+     "@description": "The fulfillment information for the added item.",
+     "elements": {
+      "fulfillmentRequests": {
+       "@description": "The list of fulfillment requests associated with the added item.",
+       "items": {
+        "elements": {
+         "id": {
+          "@description": "The unique ID for the fulfillment request.",
+          "type": "cds.String",
+          "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+          "@mandatory": true
+         },
+         "quantity": {
+          "elements": {
+           "value": {
+            "@description": "The quantity included in the fulfillment request.",
+            "type": "cds.Decimal",
+            "@mandatory": true
+           }
+          }
+         }
+        }
+       },
+       "@mandatory": true
+      }
+     },
+     "@mandatory": true
+    },
+    "itemType": {
+     "@description": "The item type of the added item. Only physical items are supported as added items.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "PHYSICAL": {}
+     },
+     "@mandatory": true
+    },
+    "product": {
+     "elements": {
+      "externalSystemReference": {
+       "elements": {
+        "externalSystemId": {
+         "@description": "The ID of the external system.",
+         "type": "cds.String",
+         "length": 255,
+         "@mandatory": true
+        },
+        "externalId": {
+         "@description": "The product ID from the external system.",
+         "type": "cds.String",
+         "length": 255,
+         "@mandatory": true
+        }
+       },
+       "@mandatory": true
+      },
+      "name": {
+       "@description": "The name of the added item's product.",
+       "type": "cds.String",
+       "length": 255
+      }
+     },
+     "@mandatory": true
+    },
+    "quantity": {
+     "elements": {
+      "value": {
+       "@description": "The quantity of the added item ordered.",
+       "type": "cds.Decimal",
+       "@mandatory": true
+      },
+      "unit": {
+       "@description": "The unit of measure for the quantity (for example, EA or KG).",
+       "type": "cds.String",
+       "length": 3,
+       "@mandatory": true
+      }
+     },
+     "@mandatory": true
+    },
+    "price": {
+     "type": "Orders_types.orderChangeItemDuringProcessingRequestPrice",
+     "@mandatory": true
+    },
+    "actionReasonCode": {
+     "type": "Orders_types.orderChangeDuringProcessingRequestActionReasonCode"
+    },
+    "customFields": {
+     "type": "Orders_types.orderChangeItemDuringProcessingRequestCustomFields"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderChangeItemDuringProcessingRequestId": {
+   "@description": "The unique identifier of the order item. You must provide this value if you are changing an existing item, for example, reducing the item's quantity.",
+   "type": "cds.String",
+   "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+   "kind": "type"
+  },
+  "Orders_types.orderChangeItemDuringProcessingRequestCustomFields": {
+   "@description": "Customized data that must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information. In addition to the order statuses typically applicable for order item changes during processing, you can also change the data in the custom fields when an order is in status CANCELED or CANCELED_DURING_PROCESSING.",
+   "elements": {},
+   "kind": "type"
+  },
+  "Orders_types.orderChangeItemDuringProcessingRequestPrice": {
+   "@description": "The price for the product. This field is only relevant for physical items.",
+   "elements": {
+    "aspectsData": {
+     "elements": {
+      "physicalItemPrice": {
+       "@description": "The pricing information for the physical items in an order.",
+       "elements": {
+        "priceTotals": {
+         "@description": "The price totals for the item.",
+         "items": {
+          "elements": {
+           "category": {
+            "@description": "The category of the price totals. The category must be 'ONE_TIME'.",
+            "type": "cds.String",
+            "@assert.range": true,
+            "enum": {
+             "ONE_TIME": {}
+            },
+            "@mandatory": true
+           },
+           "originalAmount": {
+            "@description": "The sum of all the original amounts of the items in the order. The maximum value is 9999999999999.999999.",
+            "type": "cds.Double",
+            "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+            "@Core.Example.Value": 11.22,
+            "@mandatory": true
+           },
+           "effectiveAmount": {
+            "@description": "The sum of all the effective amounts of the items in the order. The maximum value is 9999999999999.999999.",
+            "type": "cds.Double",
+            "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+            "@Core.Example.Value": 11.22
+           },
+           "finalAmount": {
+            "@description": "The sum of all the final amounts of the items in the order. The sum represents what the customer will be charged. The maximum value is 9999999999999.999999.",
+            "type": "cds.Double",
+            "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+            "@Core.Example.Value": 11.22
+           },
+           "discount": {
+            "type": "Orders_types.itemDiscountInRequest"
+           },
+           "tax": {
+            "type": "Orders_types.taxInRequest"
+           }
+          }
+         },
+         "@mandatory": true
+        }
+       },
+       "@mandatory": true
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderRetriggerRequest": {
+   "@title": "orderRetriggerRequest",
+   "@description": "The request to retrigger an order that is in status `READY_FOR_TRANSFER`, `IN_TRANSFER`, `IN_TRANSFER_FAILED`, or `PENDING`. For PENDING status caused by missing sourcing information, the missing sourcing information can be provided in the request payload. This allows the order to be sent for orchestration.",
+   "elements": {
+    "action": {
+     "@description": "The action to be performed. The value for this field must be 'RETRIGGER'.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "RETRIGGER": {}
+     },
+     "@mandatory": true
+    },
+    "sourcing": {
+     "elements": {
+      "reservation": {
+       "elements": {
+        "id": {
+         "@description": "The reservation ID provided when retrieving unsourced order items from an integrated sourcing system. This reservation ID is used for all shipments sourced in this way.",
+         "type": "cds.String"
+        }
+       }
+      },
+      "shipments": {
+       "type": "Orders_types.sourcingShipmentsRequest"
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.paymentInRequest": {
+   "@description": "If you are using an integrated payment provider (for example, the SAP digital payments add-on), map the information from your payment provider to this structure. This information is sent to your integrated fulfillment systems for further processing. Note that SAP Order Management foundation does not support direct integration with a payment provider. In addition, if you do not provide payment information in the order payload, the INVOICE payment method is used by default.",
+   "items": {
+    "elements": {
+     "method": {
+      "@description": "The method of payment defined in SAP Order Management foundation. You can include a maximum of ten payment methods in an order.",
+      "type": "cds.String",
+      "@assert.range": true,
+      "enum": {
+       "INVOICE": {},
+       "PAYMENT_CARD": {},
+       "EXTERNAL_PAYMENT": {},
+       "DIRECT_DEBIT": {},
+       "CUSTOM": {}
+      }
+     },
+     "type": {
+      "@description": "The type of electronic payment for external payments.",
+      "type": "cds.String",
+      "length": 255,
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": "external"
+     },
+     "cardToken": {
+      "@description": "The payment card token provided by the payment service. The token is used to determine the remaining information related to payment card payments. Note that credit card information is not stored in SAP Order Management foundation. In addition, consider that the maximum length for this field may be lower in your integrated fulfillment system. For example, if you integrate with SAP S/4HANA, the maximum length of this field supported in SAP S/4HANA is 25 characters.",
+      "type": "cds.String",
+      "length": 255,
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": "50000000-0000-0000-0000-000000000000"
+     },
+     "authorization": {
+      "type": "Orders_types.paymentAuthorizationInRequestOrResponse"
+     },
+     "authorizedAmount": {
+      "type": "Orders_types.paymentAuthorizedAmountInRequestOrResponse"
+     },
+     "paymentServiceProvider": {
+      "@description": "The payment service provider sent to the payment system for external payments. For example, you are processing an external payment and send the payment service provider 'PAYPAL' to the SAP digital payments add-on.",
+      "type": "cds.String",
+      "length": 255,
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": "VISA"
+     },
+     "transactionId": {
+      "@description": "The transaction ID for external payments. If you use this property, you must also provide the payment service provider.",
+      "type": "cds.String",
+      "length": 255,
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": "TX123456789"
+     },
+     "customFields": {
+      "@description": "The payment can only contain custom fields for a payment method of type 'CUSTOM'. The data must be provided as a JSON object. The top-level structure of the customFields attribute must not be an array; however, JSON arrays can be included within the customFields structure at lower levels. Content must not include personal or sensitive information. Note that the full request cannot exceed 2 MB. Keep this in mind when determining how much data you include in your custom fields.",
+      "elements": {}
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.paymentAuthorizationInRequestOrResponse": {
+   "elements": {
+    "id": {
+     "@description": "The unique identifier for authorization provided by the payment service.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "AUTH123456789"
+    },
+    "merchantId": {
+     "@description": "The unique number issued by the acquirer or payment service provider to identify a merchant to settle external payments.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "MERCHANT123"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.paymentAuthorizedAmountInRequestOrResponse": {
+   "elements": {
+    "amount": {
+     "@description": "The gross value that is to be billed for external payments. A maximum of 13 digits is allowed before the decimal point, and a maximum of two digits (decimal places) is allowed after. A maximum of 15 digits is allowed when the value does not contain a decimal point.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "11.22"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.datetimeString": {
+   "type": "cds.Timestamp",
+   "@assert.format": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$",
+   "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+   "@Core.Example.Value": "2016-10-29T13:42:32.415Z",
+   "kind": "type"
+  },
+  "Orders_types.feesInRequest": {
+   "items": {
+    "elements": {
+     "category": {
+      "@description": "The category of the fee. Only one fee is accepted for each fee category. For example, you can only include one payment fee.",
+      "type": "cds.String",
+      "@assert.range": true,
+      "enum": {
+       "SHIPPING": {},
+       "PAYMENT": {}
+      },
+      "@mandatory": true
+     },
+     "originalAmount": {
+      "@description": "The initial or base amount of a fee. The maximum value is 9999999999999.999999.",
+      "type": "cds.Double",
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": 11.22,
+      "@mandatory": true
+     },
+     "effectiveAmount": {
+      "@description": "The original amount of a fee (minus discounts). An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+      "type": "cds.Double",
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": 11.22
+     },
+     "finalAmount": {
+      "@description": "The amount of the fee the customer will be charged. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+      "type": "cds.Double",
+      "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+      "@Core.Example.Value": 11.22
+     },
+     "tax": {
+      "type": "Orders_types.taxInRequest"
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.taxInRequest": {
+   "elements": {
+    "totalAmount": {
+     "@description": "The sum of all taxes applied. The maximum value is 9999999999999.999999.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22,
+     "@mandatory": true
+    },
+    "lines": {
+     "@description": "Information about the taxes applied.",
+     "items": {
+      "elements": {
+       "code": {
+        "@description": "The tax code.",
+        "type": "cds.String",
+        "length": 255,
+        "@mandatory": true
+       },
+       "name": {
+        "@description": "The name of the tax.",
+        "type": "cds.String",
+        "length": 255,
+        "@mandatory": true
+       },
+       "amount": {
+        "@description": "The tax amount. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22,
+        "@mandatory": true
+       },
+       "rate": {
+        "@description": "The tax rate, expressed as a percentage.",
+        "type": "cds.Double"
+       }
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.sourcingShipmentsRequest": {
+   "@description": "A grouping of products from a customer's order that will be shipped from the same fulfillment site as determined by the sourcing solution. Note that the information in this field reflects the shipment as determined by the integrated sourcing solution; the actual shipments created by the fulfillment system may differ.",
+   "items": {
+    "elements": {
+     "fulfillmentSite": {
+      "@description": "The site from which a product is shipped to the customer, for example, a store, distribution center, or vendor. Note that the information in this field reflects the fulfillment site as determined by the integrated sourcing solution; the actual fulfillment site selected by the fulfillment system may differ.<br> Note that fulfillment site information must be provided for all shipments, or none of the shipments. ",
+      "elements": {
+       "id": {
+        "@description": "The unique identifier of the site from which a product is shipped. For example, if you are using SAP S/4HANA as your fulfillment system, the value must match the plant ID for the physical products in the order. If drop-ship delivery is used, the value must match the purchasing plant ID for the physical products in the order.",
+        "type": "cds.String",
+        "length": 36,
+        "@mandatory": true
+       },
+       "dropShipId": {
+        "@description": "The vendor ID for the fulfillment site when drop-ship delivery is used.",
+        "type": "cds.String",
+        "length": 36
+       }
+      }
+     },
+     "expectedShippingDate": {
+      "@description": "The date on which the full shipment is expected to be shipped.",
+      "type": "Orders_types.datetimeString"
+     },
+     "delivery": {
+      "@description": "The delivery-related information for an order. Delivery refers to the point when a customer receives a product ordered.",
+      "elements": {
+       "deliveryOption": {
+        "@description": "An available method of delivery that determines how a product will reach a customer, for example, same-day shipping, standard shipping, store pickup, and so on.",
+        "type": "cds.String",
+        "length": 50
+       },
+       "expectedDeliveryDate": {
+        "@description": "The date on which the full shipment is expected to be delivered.",
+        "type": "Orders_types.datetimeString"
+       }
+      }
+     },
+     "customFields": {
+      "type": "Orders_types.customFieldsInRequest"
+     },
+     "items": {
+      "@description": "The products to be shipped to the customer. Each shipment item must have a corresponding order item within the order, and vice versa.",
+      "items": {
+       "elements": {
+        "referenceId": {
+         "@description": "The unique ID for the order item in the external order capture system (for example, an online store) in which the order was originally placed. This must match the order item reference ID within the order item list.",
+         "type": "cds.String",
+         "length": 36,
+         "@mandatory": true
+        },
+        "quantity": {
+         "type": "Orders_types.quantityInOrderCreateRequest",
+         "@mandatory": true
+        }
+       }
+      },
+      "@mandatory": true
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.quantityInOrderCreateRequest": {
+   "elements": {
+    "value": {
+     "@description": "The quantity of an item ordered. The number can be an integer or a decimal (for example, 1 or 1.5 tons). A maximum of 10 digits is allowed before the decimal point, and a maximum of three digits (decimal places) is allowed after. A maximum of 13 digits is allowed when the value does not contain a decimal point. <br>If you are using SAP Subscription Billing, the value must be an integer no less than 1, and must not exceed 9999.",
+     "type": "cds.Decimal",
+     "@mandatory": true
+    },
+    "unit": {
+     "@description": "The code for the unit of measure in which typically the stock of a product is managed. This value must be between 1 and 3 characters. <br>Note that if you are using SAP Subscription Billing, the only accepted unit is 'C62'.",
+     "type": "cds.String",
+     "length": 3,
+     "@mandatory": true
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.itemDiscountInRequest": {
+   "@description": "The schema for discounts in an order.",
+   "elements": {
+    "totalAmount": {
+     "@description": "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22,
+     "@mandatory": true
+    },
+    "lines": {
+     "@description": "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+     "items": {
+      "elements": {
+       "amount": {
+        "@description": "The amount of the discount. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22,
+        "@mandatory": true
+       },
+       "basedOn": {
+        "@description": "The preceding sequence number, on which the current discount is applied. If the discount is the first applied in the sequence, the value of this field should be null.",
+        "type": "cds.Integer"
+       },
+       "previousItemAmount": {
+        "@description": "The amount for the item before the value of the current discount is applied. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22
+       },
+       "newItemAmount": {
+        "@description": "The amount for the item after the value of the current discount is applied. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22
+       },
+       "rate": {
+        "@description": "The discount rate, expressed as a percentage.",
+        "type": "cds.Double"
+       },
+       "promotionId": {
+        "@description": "The promotion ID.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "promotionDescription": {
+        "@description": "The promotion description.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "externalPromotionType": {
+        "@description": "The promotion type.",
+        "type": "cds.String",
+        "length": 255
+       }
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.CreateOrderResponse": {
+   "@description": "The response when creating an order.",
+   "elements": {
+    "id": {
+     "@description": "The unique identifier of the order.",
+     "type": "cds.String",
+     "length": 36,
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "displayId": {
+     "@description": "The outward-facing identifier of the order.",
+     "type": "cds.Integer64"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.CreateOrderRequestBodySchema": {
+   "@description": "The payload for creating an order.",
+   "elements": {
+    "businessObjectId": {
+     "@description": "A unique identifier that you provide for an order. Provide this ID when submitting an order to ensure that duplicate orders cannot be created in SAP Order Management foundation.",
+     "type": "cds.String",
+     "length": 50,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "15242b11-f982-4e88-ae02-998d820f4e0d"
+    },
+    "precedingDocument": {
+     "type": "Orders_types.precedingDocumentInOrderCreateRequest"
+    },
+    "owner": {
+     "@description": "The user responsible for the order. An owner is only assigned when an order is created on behalf of a customer, for example, if a sales agent or call center employee places an order for a customer.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "testUser@testUserMail.com"
+    },
+    "market": {
+     "@description": "The market for the order. The value of this field must match one of the markets defined in Business Configuration. For more information about markets, see the Service Guide.",
+     "elements": {
+      "marketId": {
+       "@description": "The ID for the market.",
+       "type": "cds.String",
+       "length": 255,
+       "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+       "@Core.Example.Value": "A1",
+       "@mandatory": true
+      }
+     },
+     "@mandatory": true
+    },
+    "payment": {
+     "type": "Orders_types.paymentInRequest"
+    },
+    "description": {
+     "@description": "The description of the order.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "sample order"
+    },
+    "channel": {
+     "type": "Orders_types.channelInRequestOrResponse"
+    },
+    "customer": {
+     "@description": "The customer information for the order. The customer data must include a customer ID from the master data, or the external customer system references (external customer ID and external system ID). \nIf a ship-to address is present in this schema, you cannot include the shipToParty schema in your order payload.\n",
+     "elements": {
+      "cuid": {
+       "@description": "The ID for the customer from the master data. For purposes of data protection and privacy, this ID is used in the Data Subject ID field in the SAP Personal Data Manager app.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "guest": {
+       "@description": "The flag to indicate if a guest user placed the order. If this flag is set to 'true', you must provide the correct shipping and billing addresses in the order payload.",
+       "type": "cds.Boolean"
+      },
+      "externalSystemReference": {
+       "type": "Orders_types.customerExternalSystemReference"
+      },
+      "addresses": {
+       "type": "Orders_types.orderCustomerAddresses"
+      },
+      "displayId": {
+       "@description": "The outward-facing identifier of the customer. This field is required if you have disabled customer data enrichment in Business Configuration. It is not used otherwise.",
+       "type": "cds.String",
+       "length": 255
+      },
+      "customerType": {
+       "@description": "The type of customer, for example, a person or company. This field is optional if you have disabled customer data enrichment in Business Configuration. It is not used otherwise. Include this information in the order payload if you need it for reference.",
+       "type": "cds.String",
+       "@assert.range": true,
+       "enum": {
+        "PERSON": {},
+        "COMPANY": {}
+       }
+      },
+      "person": {
+       "@description": "The person's names and titles. This field is optional if you have disabled customer data enrichment in Business Configuration. It is not used otherwise. Include this information in the order payload if you need it for reference.",
+       "type": "Orders_types.Person"
+      },
+      "company": {
+       "@description": "The company name of the individual customer. This field is optional if you have disabled customer data enrichment in Business Configuration. It is not used otherwise. Include this information in the order payload if you need it for reference.",
+       "type": "cds.String",
+       "length": 255
+      }
+     },
+     "@mandatory": true
+    },
+    "shipToParty": {
+     "type": "Orders_types.shipToPartyInCreateOrderRequest"
+    },
+    "pricingDate": {
+     "@description": "The date and time used to determine the price for the subscription. Note that this field is only relevant for subscription items.",
+     "type": "Orders_types.datetimeString"
+    },
+    "fees": {
+     "type": "Orders_types.feesInRequest"
+    },
+    "discount": {
+     "type": "Orders_types.headerDiscountInRequestOrResponse"
+    },
+    "orderItems": {
+     "items": {
+      "elements": {
+       "lineNumber": {
+        "@description": "The number representing the sequence of an order item within an order. For example, '1' is the value of the line number for the first order item within an order. <br>The maximum length of this field is determined by the fulfillment system. For example, '6' is the maximum length for SAP S/4HANA. <br>Note that the value cannot contain decimal places, or include more than 10 digits, 0, or a negative or duplicate value.",
+        "type": "cds.String",
+        "@assert.format": "^\\d{1,10}$"
+       },
+       "referenceId": {
+        "@description": "The unique ID for the order item in the external order capture system (for example, an online store) in which the order was originally placed. This field is required if you are using sourcing.",
+        "type": "cds.String",
+        "length": 36
+       },
+       "parentReferenceId": {
+        "@description": "The reference ID of the higher-level (parent) item within a product hierarchy. This field is used for physical products when the item is a subitem as part of a hierarchical product.",
+        "type": "cds.String",
+        "length": 36
+       },
+       "product": {
+        "elements": {
+         "externalSystemReference": {
+          "elements": {
+           "externalSystemId": {
+            "@description": "The ID of the external system.",
+            "type": "cds.String",
+            "length": 255,
+            "@mandatory": true
+           },
+           "externalId": {
+            "@description": "The product ID from the external system.",
+            "type": "cds.String",
+            "length": 255,
+            "@mandatory": true
+           }
+          },
+          "@mandatory": true
+         },
+         "name": {
+          "@description": "The name of the product. This field is optional if you have disabled product data enrichment in Business Configuration. It is not used otherwise. Include this information in the order payload if you wish to display the product name in the Display Orders app.",
+          "type": "cds.String",
+          "length": 255
+         }
+        },
+        "@mandatory": true
+       },
+       "quantity": {
+        "type": "Orders_types.quantityInOrderCreateRequest",
+        "@mandatory": true
+       },
+       "itemType": {
+        "@description": "The item type, such as physical item (for physical products) or subscription item (for subscription products).",
+        "type": "cds.String",
+        "@assert.range": true,
+        "enum": {
+         "PHYSICAL": {},
+         "SUBSCRIPTION": {}
+        },
+        "@mandatory": true
+       },
+       "price": {
+        "type": "Orders_types.orderItemPriceInRequest"
+       },
+       "aspectsData": {
+        "type": "Orders_types.orderItemAspectsDataInRequest"
+       },
+       "customFields": {
+        "type": "Orders_types.customFieldsInRequest"
+       }
+      }
+     },
+     "@mandatory": true
+    },
+    "sourcing": {
+     "@description": "The sourcing-related information for an order. Sourcing defines the shipping and delivery process of how products reach customers. Note that if your solution offers the sale of physical and subscription products, you must provide a fulfillment site for both types of products, and the shipments must include a shipment item for each order item (physical item or subscription item). If you include only partial sourcing information in your payload, SAP Order Management foundation calls an integrated sourcing system if you’ve enabled this option in the Integration Settings or the market in Business Configuration.",
+     "elements": {
+      "reservation": {
+       "@description": "The reservation information from the sourcing solution for the order items. This reserves the products at a specific fulfillment site to ensure that they will be available for shipping.<br> Ensure that you have provided the corresponding fulfillment site information in the shipment when using this field.",
+       "elements": {
+        "id": {
+         "@description": "The unique identifier of the sourcing reservation for all products in the order.",
+         "type": "cds.String",
+         "length": 36
+        }
+       }
+      },
+      "shipments": {
+       "type": "Orders_types.sourcingShipmentsRequest"
+      }
+     }
+    },
+    "customFields": {
+     "type": "Orders_types.customFieldsInRequest"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.precedingDocumentInOrderCreateRequest": {
+   "@description": "The document that triggered the order creation.",
+   "elements": {
+    "externalSystemReference": {
+     "elements": {
+      "externalSystemId": {
+       "@description": "The ID of the external system where the preceding document was created.",
+       "type": "cds.String",
+       "length": 255,
+       "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+       "@Core.Example.Value": "YourSystem",
+       "@mandatory": true
+      },
+      "externalId": {
+       "@description": "The preceding document ID from the external system.",
+       "type": "cds.String",
+       "length": 255,
+       "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+       "@Core.Example.Value": "d2716b94085c4bce88452e1d08e5c0b9"
+      },
+      "externalNumber": {
+       "@description": "The preceding document number from the external system.",
+       "type": "cds.String",
+       "length": 255,
+       "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+       "@Core.Example.Value": "492"
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.channelInRequestOrResponse": {
+   "@description": "The means by which the order is received in SAP Order Management foundation (for example, Web, IoT, call center). Note that this may represent an intermediary channel, and not necessarily the channel in which the order was originally placed.",
+   "elements": {
+    "id": {
+     "@description": "The ID for the channel from which the order was received.",
+     "type": "cds.String",
+     "length": 36,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "onlineStore"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.customerExternalSystemReference": {
+   "@description": "The external system references for the customer. This represents an external system (such as an online store) that provides customer data as part of the order payload.",
+   "elements": {
+    "externalSystemId": {
+     "@description": "The ID of the external system that provides the customer data.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "YourSystem"
+    },
+    "externalId": {
+     "@description": "The customer ID from the external system.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "externalId"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderCustomerAddresses": {
+   "items": {
+    "type": "Orders.anonymous.type6"
+   },
+   "kind": "type"
+  },
+  "Orders_types.addressCommonProperties": {
+   "elements": {
+    "street": {
+     "type": "Orders_types.Street"
+    },
+    "houseNumber": {
+     "type": "Orders_types.HouseNumber"
+    },
+    "building": {
+     "type": "Orders_types.Building"
+    },
+    "roomNumber": {
+     "type": "Orders_types.RoomNumber"
+    },
+    "floorNumber": {
+     "type": "Orders_types.FloorNumber"
+    },
+    "postalCode": {
+     "type": "Orders_types.PostalCode"
+    },
+    "city": {
+     "type": "Orders_types.City"
+    },
+    "country": {
+     "type": "Orders_types.Country",
+     "@mandatory": true
+    },
+    "district": {
+     "type": "Orders_types.District"
+    },
+    "state": {
+     "type": "Orders_types.State"
+    },
+    "phone": {
+     "type": "Orders_types.Phone"
+    },
+    "email": {
+     "type": "Orders_types.Email"
+    },
+    "fax": {
+     "type": "Orders_types.Fax"
+    },
+    "additionalAddressInfo": {
+     "type": "Orders_types.AdditionalAddressInfo"
+    },
+    "correspondenceLanguage": {
+     "type": "Orders_types.CorrespondenceLanguage"
+    },
+    "poBox": {
+     "type": "Orders_types.PoBox"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.customerPerson": {
+   "elements": {
+    "firstName": {
+     "@description": "The person's first (given) name.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "John"
+    },
+    "middleName": {
+     "@description": "The person's middle name.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "M."
+    },
+    "lastName": {
+     "@description": "The person's last (family) name.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "Doe"
+    },
+    "name": {
+     "@description": "The person's full name.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "John Doe"
+    },
+    "academicTitle": {
+     "@description": "The person's academic title, for example, Dr.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "Dr"
+    },
+    "salutationCode": {
+     "@description": "The code of the salutation.",
+     "type": "cds.String",
+     "length": 255,
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": "Hola"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.shipToPartyInCreateOrderRequest": {
+   "@description": "The information for the customer (partner) who will receive the order. If this schema is present, the ship-to address should be provided here and not in the customer schema.",
+   "elements": {
+    "cuid": {
+     "@description": "The ID for the customer from the master data.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "displayId": {
+     "@description": "The outward-facing identifier of the customer. This field is required if you have disabled customer data enrichment in Business Configuration. It is not used otherwise.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "externalSystemReference": {
+     "type": "Orders_types.shipToPartyExternalReferences"
+    },
+    "address": {
+     "type": "Orders_types.shipToPartyAddressInCreateOrderRequest"
+    },
+    "type": {
+     "@description": "The type of ship-to-party, for example, a person or company.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "PERSON": {},
+      "COMPANY": {}
+     }
+    },
+    "company": {
+     "@description": "The company name of the individual customer.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "person": {
+     "@description": "The person's names and titles. This field is optional if you have disabled customer data enrichment in Business Configuration. It is not used otherwise. Include this information in the order payload if you need it for reference.",
+     "type": "Orders_types.Person"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.shipToPartyExternalReferences": {
+   "@description": "The external system references for the customer. This represents an external system (such as an online store) that provides customer data as part of the order payload.",
+   "elements": {
+    "externalSystemId": {
+     "@description": "The ID of the external system that provides the customer data.",
+     "type": "cds.String",
+     "length": 255
+    },
+    "externalId": {
+     "@description": "The customer ID from the external system.",
+     "type": "cds.String",
+     "length": 255
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.shipToPartyAddressInCreateOrderRequest": {
+   "elements": {},
+   "includes": [
+    "Orders_types.addressCommonProperties"
+   ],
+   "kind": "type"
+  },
+  "Orders_types.headerDiscountInRequestOrResponse": {
+   "@description": "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+   "elements": {
+    "totalAmount": {
+     "@description": "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22,
+     "@mandatory": true
+    },
+    "lines": {
+     "@description": "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+     "items": {
+      "elements": {
+       "amount": {
+        "@description": "The amount of the discount. The maximum value is 9999999999999.999999.",
+        "type": "cds.Double",
+        "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+        "@Core.Example.Value": 11.22,
+        "@mandatory": true
+       },
+       "sequenceNumber": {
+        "@description": "The position of this discount in the sequence of discounts applied to the item.",
+        "type": "cds.Integer"
+       },
+       "basedOn": {
+        "@description": "The preceding sequence number, on which the current discount is applied. If the discount is the first applied in the sequence, the value of this field should be null.",
+        "type": "cds.Integer"
+       },
+       "rate": {
+        "@description": "The discount rate, expressed as a percentage.",
+        "type": "cds.Double"
+       },
+       "promotionId": {
+        "@description": "The promotion ID.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "promotionDescription": {
+        "@description": "The promotion description.",
+        "type": "cds.String",
+        "length": 255
+       },
+       "externalPromotionType": {
+        "@description": "The promotion type.",
+        "type": "cds.String",
+        "length": 255
+       }
+      }
+     }
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderItemPriceInRequest": {
+   "@description": "The price for the product. This field is only relevant for physical items.",
+   "elements": {
+    "aspectsData": {
+     "type": "Orders_types.orderItemPriceAspectsDataInRequest"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderItemPriceAspectsDataInRequest": {
+   "elements": {
+    "physicalItemPrice": {
+     "@description": "The pricing information for the physical items in an order. All physical items in an order must have the same pricing and tax structure. For example, if all pricing-related fields for an item are present, then the fields for the remaining items must also be present. The same applies to the tax-related fields. (Note that the tax-related fields are optional.)",
+     "elements": {
+      "priceTotals": {
+       "@description": "The price totals for the item.",
+       "items": {
+        "elements": {
+         "category": {
+          "@description": "The category of the price totals. The category must be 'ONE_TIME'.",
+          "type": "cds.String",
+          "@assert.range": true,
+          "enum": {
+           "ONE_TIME": {}
+          },
+          "@mandatory": true
+         },
+         "originalAmount": {
+          "@description": "The initial or base price of a product, comprising the unit price multiplied by the quantity. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22,
+          "@mandatory": true
+         },
+         "effectiveAmount": {
+          "@description": "The original amount minus discounts. An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "finalAmount": {
+          "@description": "The amount that the customer will be charged for the quantity ordered. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+          "type": "cds.Double",
+          "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+          "@Core.Example.Value": 11.22
+         },
+         "discount": {
+          "type": "Orders_types.itemDiscountInRequest"
+         },
+         "tax": {
+          "type": "Orders_types.taxInRequest"
+         }
+        }
+       },
+       "@mandatory": true
+      }
+     },
+     "@mandatory": true
+    },
+    "subscriptionItemPrice": {
+     "type": "Orders_types.orderItemPriceAspectsDataSubscriptionItemPriceInRequest"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderItemPriceAspectsDataSubscriptionItemPriceInRequest": {
+   "@description": "The pricing information for subscription items in orders. This field is required if you have disabled product data enrichment in Business Configuration. It is not used otherwise.",
+   "elements": {
+    "pricingStrategy": {
+     "type": "Orders_types.orderItemPriceAspectsDataSubscriptionItemPricePriceStrategyInRequest"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderItemPriceAspectsDataSubscriptionItemPricePriceStrategyInRequest": {
+   "@description": "Determines the pricing for a subscription item. This field is required if you have disabled product data enrichment in Business Configuration. It is not used otherwise.",
+   "elements": {
+    "id": {
+     "@description": "The unique identifier of the pricing strategy. This field is required if you have disabled product data enrichment in Business Configuration. It is not used otherwise.",
+     "type": "cds.String",
+     "length": 36,
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderItemAspectsDataInRequest": {
+   "@description": "Only relevant for subscription items.",
+   "elements": {
+    "subscriptionItem": {
+     "@description": "The information for a subscription item in an order.",
+     "elements": {
+      "validFrom": {
+       "@description": "The start of the validity period for subscription items.",
+       "type": "Orders_types.datetimeString",
+       "@mandatory": true
+      },
+      "validTo": {
+       "@description": "The end of the validity period for subscription items.",
+       "type": "Orders_types.datetimeString"
+      },
+      "contractTerm": {
+       "type": "Orders_types.orderItemAspectsDataContractTermInRequest"
+      },
+      "renewalTerm": {
+       "@description": "The period by which the subscription automatically extends after the minimum contract term.",
+       "elements": {
+        "period": {
+         "@description": "The length of the renewal term in months.",
+         "type": "cds.Integer"
+        }
+       }
+      },
+      "cancellationPolicy": {
+       "@description": "Information for the cancellation.",
+       "elements": {
+        "allowMidBillCycleExpiration": {
+         "@description": "The flag to determine whether a subscription may expire in the middle of a billing cycle.",
+         "type": "cds.Boolean"
+        },
+        "termOfNotice": {
+         "@description": "The period of time to be observed if a customer wants to cancel a subscription.",
+         "type": "cds.Integer"
+        }
+       }
+      },
+      "overwriteContractTerm": {
+       "@description": "The flag to determine whether the subscription terms predefined in the product can be overwritten.",
+       "type": "cds.Boolean"
+      },
+      "calculateSubscriptionEndDate": {
+       "@description": "The flag to enable the calculation of the subscription end date.",
+       "type": "cds.Boolean"
+      },
+      "numberOfWaiverPeriods": {
+       "@description": "The number of billing cycles for which recurring charges are waived after the start of the subscription.",
+       "type": "cds.Integer"
+      }
+     },
+     "@mandatory": true
+    }
+   },
+   "kind": "type"
+  },
+  "Orders_types.orderItemAspectsDataContractTermInRequest": {
+   "@description": "The information for the contract term for a subscription item. This represents the minimum contract term of the subscription. During the minimum term, the subscription cannot be canceled.",
+   "elements": {
+    "period": {
+     "@description": "The period of the minimum contract term in months.",
+     "type": "cds.Integer"
+    },
+    "endDate": {
+     "@description": "The end date of the minimum contract term for a subscription item.",
+     "type": "cds.Timestamp"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders.anonymous.type0": {
+   "@description": "The reason code explaining why an order is in status PENDING. <br>CUSTOMER_CUID_UNKNOWN: The ID from the customer master data is not available in SAP Order Management foundation. <br>CUSTOMER_EXTERNAL_REF_UNKNOWN: The customer ID from the external system (for example, an online store) is not available in SAP Order Management foundation. <br>SHIP_TO_PARTY_CUID_UNKNOWN: The ID for the ship-to party from the customer master data is not available in SAP Order Management foundation. <br>SHIP_TO_PARTY_EXTERNAL_REF_UNKNOWN: The ship-to party ID from the external system (for example, an online store) is not available in SAP Order Management foundation. <br>SOURCING_UNKNOWN_OR_INCOMPLETE: Part or all of the sourcing information is missing. This status is only relevant if you are using a sourcing-based orchestration strategy. <br>SOURCING_REQUEST_ADDRESS_MISSING: The ship-to address is missing from the sourcing information. This status is relevant if SAP Order Management foundation is integrated with a sourcing solution. In this case, the integrated sourcing system cannot be reached because of the missing ship-to address.",
+   "type": "cds.String",
+   "@assert.range": true,
+   "enum": {
+    "CUSTOMER_CUID_UNKNOWN": {},
+    "CUSTOMER_EXTERNAL_REF_UNKNOWN": {},
+    "SHIP_TO_PARTY_CUID_UNKNOWN": {},
+    "SHIP_TO_PARTY_EXTERNAL_REF_UNKNOWN": {},
+    "SOURCING_UNKNOWN_OR_INCOMPLETE": {},
+    "SOURCING_REQUEST_ADDRESS_MISSING": {}
+   },
+   "kind": "type"
+  },
+  "Orders.anonymous.type1": {
+   "@description": "The address information for the order.",
+   "elements": {
+    "street": {
+     "type": "Orders_types.Street"
+    },
+    "houseNumber": {
+     "type": "Orders_types.HouseNumber"
+    },
+    "building": {
+     "type": "Orders_types.Building"
+    },
+    "roomNumber": {
+     "type": "Orders_types.RoomNumber"
+    },
+    "floorNumber": {
+     "type": "Orders_types.FloorNumber"
+    },
+    "postalCode": {
+     "type": "Orders_types.PostalCode"
+    },
+    "city": {
+     "type": "Orders_types.City"
+    },
+    "country": {
+     "type": "Orders_types.Country"
+    },
+    "district": {
+     "type": "Orders_types.District"
+    },
+    "state": {
+     "type": "Orders_types.State"
+    },
+    "phone": {
+     "type": "Orders_types.Phone"
+    },
+    "email": {
+     "type": "Orders_types.Email"
+    },
+    "fax": {
+     "type": "Orders_types.Fax"
+    },
+    "additionalAddressInfo": {
+     "type": "Orders_types.AdditionalAddressInfo"
+    },
+    "correspondenceLanguage": {
+     "type": "Orders_types.CorrespondenceLanguage"
+    },
+    "addressType": {
+     "@description": "The type of the address, for example, the bill-to, ship-to, or sold-to address.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "BILL_TO": {},
+      "SHIP_TO": {},
+      "SOLD_TO": {}
+     }
+    },
+    "person": {
+     "type": "Orders_types.Person"
+    },
+    "poBox": {
+     "type": "Orders_types.PoBox"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders.anonymous.type2": {
+   "elements": {
+    "previousItemAmount": {
+     "@description": "The amount for the item before the value of the current discount is applied.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22
+    },
+    "newItemAmount": {
+     "@description": "The amount for the item after the value of the current discount is applied.",
+     "type": "cds.Double",
+     "@Core.Example.$Type": "Core.PrimitiveExampleValue",
+     "@Core.Example.Value": 11.22
+    }
+   },
+   "includes": [
+    "Orders_types.BaseDiscountLine"
+   ],
+   "kind": "type"
+  },
+  "Orders.anonymous.type3": {
+   "@description": "The address information for the order.",
+   "elements": {
+    "street": {
+     "type": "Orders_types.Street"
+    },
+    "houseNumber": {
+     "type": "Orders_types.HouseNumber"
+    },
+    "building": {
+     "type": "Orders_types.Building"
+    },
+    "roomNumber": {
+     "type": "Orders_types.RoomNumber"
+    },
+    "floorNumber": {
+     "type": "Orders_types.FloorNumber"
+    },
+    "postalCode": {
+     "type": "Orders_types.PostalCode"
+    },
+    "city": {
+     "type": "Orders_types.City"
+    },
+    "country": {
+     "type": "Orders_types.Country"
+    },
+    "district": {
+     "type": "Orders_types.District"
+    },
+    "state": {
+     "type": "Orders_types.State"
+    },
+    "phone": {
+     "type": "Orders_types.Phone"
+    },
+    "email": {
+     "type": "Orders_types.Email"
+    },
+    "fax": {
+     "type": "Orders_types.Fax"
+    },
+    "additionalAddressInfo": {
+     "type": "Orders_types.AdditionalAddressInfo"
+    },
+    "correspondenceLanguage": {
+     "type": "Orders_types.CorrespondenceLanguage"
+    },
+    "addressType": {
+     "@description": "The type of the address, for example, the bill-to, ship-to, or sold-to address.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "BILL_TO": {},
+      "SHIP_TO": {},
+      "SOLD_TO": {}
+     }
+    },
+    "person": {
+     "type": "Orders_types.Person"
+    },
+    "poBox": {
+     "type": "Orders_types.PoBox"
+    }
+   },
+   "kind": "type"
+  },
+  "Orders.anonymous.type4": {
+   "elements": {
+    "shipmentId": {
+     "@description": "The unique ID of the existing shipment where the new item will be added. Cannot be combined with fulfillmentSite, expectedShippingDate, delivery, or customFields.",
+     "type": "cds.String",
+     "@assert.format": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "fulfillmentSite": {
+     "@description": "The site from which the added item will be shipped. For a new shipment, a value for this field is required when a shipment ID is not present. For an existing shipment that includes a shipment ID, a value for this field cannot be present.",
+     "elements": {
+      "id": {
+       "@description": "The unique ID for the fulfillment site.",
+       "type": "cds.String",
+       "length": 36,
+       "@mandatory": true
+      },
+      "dropShipId": {
+       "@description": "The vendor ID for the fulfillment site when drop-ship delivery is used.",
+       "type": "cds.String",
+       "length": 36
+      }
+     }
+    },
+    "expectedShippingDate": {
+     "type": "Orders_types.datetimeString"
+    },
+    "delivery": {
+     "@description": "The delivery information for the new shipment. Must not be provided when shipmentId is present.",
+     "elements": {
+      "deliveryOption": {
+       "@description": "The delivery method.",
+       "type": "cds.String",
+       "length": 50
+      },
+      "expectedDeliveryDate": {
+       "type": "Orders_types.datetimeString"
+      }
+     }
+    },
+    "items": {
+     "items": {
+      "elements": {
+       "referenceId": {
+        "@description": "The unique ID for the order item in the external order capture system.",
+        "type": "cds.String",
+        "length": 36,
+        "@mandatory": true
+       },
+       "quantity": {
+        "elements": {
+         "value": {
+          "@description": "The quantity of the item in the shipment.",
+          "type": "cds.Decimal",
+          "@mandatory": true
+         },
+         "unit": {
+          "@description": "The code for the unit of measure in which typically the stock of a product is managed. The unit is only required when adding an item to a new (rather than an existing) shipment.",
+          "type": "cds.String",
+          "length": 3
+         }
+        },
+        "@mandatory": true
+       }
+      }
+     }
+    },
+    "customFields": {
+     "@description": "The custom fields for the new shipment. Must not be provided when shipmentId is present.",
+     "type": "Orders_types.orderChangeItemDuringProcessingRequestCustomFields"
+    }
+   },
+   "@openapi.oneOf": "[{\"required\":[\"items\",\"shipmentId\"]},{\"required\":[\"fulfillmentSite\",\"items\"]}]",
+   "@open": true,
+   "kind": "type"
+  },
+  "Orders.anonymous.type5": {
+   "elements": {},
+   "@openapi.oneOf": "[{\"$ref\":\"#/components/schemas/orderChangeItemDuringProcessingRequestExistingItem\"},{\"$ref\":\"#/components/schemas/orderChangeItemDuringProcessingRequestNewItem\"}]",
+   "@open": true,
+   "kind": "type"
+  },
+  "Orders.anonymous.type6": {
+   "@description": "The address information for the order.",
+   "elements": {
+    "addressType": {
+     "@description": "The type of the address, for example, the bill-to, ship-to, or sold-to address.",
+     "type": "cds.String",
+     "@assert.range": true,
+     "enum": {
+      "BILL_TO": {},
+      "SHIP_TO": {},
+      "SOLD_TO": {}
+     }
+    },
+    "person": {
+     "type": "Orders_types.customerPerson"
+    }
+   },
+   "includes": [
+    "Orders_types.addressCommonProperties"
+   ],
+   "kind": "type"
+  },
+  "common.JSON": {
+   "kind": "type",
+   "type": "cds.LargeString"
+  }
+ },
+ "meta": {
+  "creator": "cds-import-openapi"
+ }
+}

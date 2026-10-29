@@ -1,0 +1,14 @@
+{
+  "cds": {
+    "requires": {
+      "Orders": {
+        "kind": "rest",
+        "model": "srv/external/OrderManagementV3"
+      },
+       "db": {
+        "kind": "sqlite",
+        "url": "db.sqlite"
+      }
+    }
+  }
+}

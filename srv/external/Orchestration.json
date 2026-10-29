@@ -1,0 +1,3804 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "Orchestration",
+    "description" : "Provides methods to:\n * Monitor planning tasks created when errors occur during orchestration planning and retrigger the tasks for troubleshooting purposes.\n * Retrieve fulfillment requests created as a result of orchestration planning. Retrigger key mapping for pending fulfillment requests, and if key mapping exists, then orchestration execution begins by creating and triggering dispatch tasks.\n * Monitor dispatch tasks and retrigger them for troubleshooting purposes.\n * Send the order confirmation from a fulfillment system, such as SAP S/4HANA Cloud, to SAP Order Management foundation.\n",
+    "version" : "1.2.27"
+  },
+  "externalDocs" : {
+    "description" : "SAP Order Management Foundation Documentation",
+    "url" : "https://help.sap.com/docs/SAP_Order_Management_Foundation?version=Cloud"
+  },
+  "servers" : [ {
+    "url" : "https://c4h-order.cfapps.eu20.hana.ondemand.com/api/v1",
+    "description" : "eu20"
+  }, {
+    "url" : "https://c4h-order.cfapps.ap20.hana.ondemand.com/api/v1",
+    "description" : "ap20"
+  }, {
+    "url" : "https://c4h-order.cfapps.us21.hana.ondemand.com/api/v1",
+    "description" : "us21"
+  } ],
+  "security" : [ {
+    "oauth2" : [ "{identityzone}.DispatchView", "{identityzone}.DispatchManage", "{identityzone}.DispatchIntegrate" ]
+  } ],
+  "tags" : [ {
+    "name" : "Orchestration Planning",
+    "description" : "Orchestration planning related operations"
+  }, {
+    "name" : "Fulfillment Request",
+    "description" : "Fulfillment request related operations"
+  }, {
+    "name" : "Orchestration Execution",
+    "description" : "Orchestration execution related operations"
+  } ],
+  "paths" : {
+    "/dispatch/tasks" : {
+      "get" : {
+        "tags" : [ "Orchestration Execution" ],
+        "summary" : "Retrieve dispatch tasks that meet the selection criteria.",
+        "description" : "View the status of your dispatch tasks and monitor them.",
+        "operationId" : "getTasks",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "query",
+          "description" : "The dispatch task ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "orderId",
+          "in" : "query",
+          "description" : "The order ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "orderDisplayId",
+          "in" : "query",
+          "description" : "The display ID of the order.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fulfillmentRequestId",
+          "in" : "query",
+          "description" : "The fulfillment request ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "description" : "A dispatch task can have one of the following statuses:",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "RECEIVED", "TRIGGERED", "RETRYING", "TOBECONFIRMED", "SUCCESSFUL", "FAILED", "CANCELED" ]
+          }
+        }, {
+          "name" : "targetSystemType",
+          "in" : "query",
+          "description" : "The target system type. For example, \"SAP_SUBSCRIPTION_BILLING\" for your SAP Subscription Billing system or \"SAP_S4_CLOUD\" for your SAP S/4HANA system.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "CUSTOM", "SAP_S4_CLOUD", "SAP_S4_ONPREM", "SAP_ERP", "SAP_SUBSCRIPTION_BILLING" ]
+          }
+        }, {
+          "name" : "triggeredAt",
+          "in" : "query",
+          "description" : "The date and time at which the dispatch task status was last set to 'TRIGGERED'. If orchestration automatically retries to transfer the fulfillment request associated with the dispatch task, then the status of the dispatch task changes to 'TRIGGERED', and each retry updates the value of the 'triggeredAt' attribute.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "triggeredAfter",
+          "in" : "query",
+          "description" : "The date and time after which the dispatch task was triggered.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "triggeredBefore",
+          "in" : "query",
+          "description" : "The date and time before which the dispatch task was triggered.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "You can sort by the supported parameters in ascending or descending order. For example: ?sort=orderId,[asc|desc]&sort=status,[asc|desc].",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "default" : "triggeredAt,desc"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "description" : "The result set is returned at a given page number. For example: ?page=2 returns the 2nd page of result set.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "The number of results per page.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The dispatch tasks were successfully retrieved.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/multipleDispatchTaskReadResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ]
+      }
+    },
+    "/dispatch/tasks/{id}" : {
+      "get" : {
+        "tags" : [ "Orchestration Execution" ],
+        "summary" : "Retrieve a dispatch task using a specific ID.",
+        "description" : "View the status of the dispatch task.",
+        "operationId" : "getTaskById",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "The dispatch task ID.",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The dispatch task was successfully retrieved.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/singleDispatchTaskReadResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "404" : {
+            "description" : "No results were found. If you provided parameters, ensure that they are valid.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ]
+      }
+    },
+    "/dispatch/retriggerTasks" : {
+      "put" : {
+        "tags" : [ "Orchestration Execution" ],
+        "summary" : "Retrigger dispatch tasks.",
+        "description" : "Retrigger one or more dispatch tasks that contain an error and restart the transfer process. You can retrigger a maximum of 500 tasks in one request.<br>For important information about retriggering dispatch tasks, see [Monitoring and Troubleshooting Dispatch Tasks](https://help.sap.com/docs/SAP_Order_Management_Foundation/d91676a7fa624c31b7b1c526d7787e2f/1ab467ba65d34cfc982b13b4c2c4e1ea.html?locale=en-US&version=Cloud) on SAP Help Portal.",
+        "operationId" : "putRetriggerTasks",
+        "requestBody" : {
+          "description" : "The list of tasks to be retriggered.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/dispatchTaskRetriggerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The dispatch tasks were successfully retriggered.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/dispatchTaskRetriggerResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "413" : {
+            "description" : "The maximum request payload size has been exceeded.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchManage" ]
+        } ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/dispatch/confirmTask" : {
+      "put" : {
+        "tags" : [ "Orchestration Execution" ],
+        "summary" : "Send the order confirmation to SAP Order Management foundation.",
+        "description" : "Send the confirmation from the fulfillment system to SAP Order Management foundation. Note that one of the following must be present in the request to allow the system to set the dispatch task to SUCCESSFUL: <ul><li>documentNumber</li><li>documentId</li></ul>For example, you can provide the ID of the sales order from your fulfillment system. Note that if both of these values are missing from the request, the dispatch task will be set to FAILED.",
+        "operationId" : "putConfirmTask",
+        "requestBody" : {
+          "description" : "The order confirmation returned by the fulfillment system.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/dispatchTaskConfirmRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The order confirmation message was successfully received, and the dispatch task was updated accordingly.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/dispatchTaskConfirmResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "413" : {
+            "description" : "The maximum request payload size has been exceeded.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchIntegrate" ]
+        } ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/orchestration/fulfillmentRequests" : {
+      "get" : {
+        "tags" : [ "Fulfillment Request" ],
+        "summary" : "Retrieve fulfillment requests.",
+        "description" : "View the status of your fulfillment requests and monitor them.",
+        "operationId" : "getFulfillmentRequests",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "query",
+          "description" : "The fulfillment request ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "displayId",
+          "in" : "query",
+          "description" : "The display ID of the fulfillment request.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "documentDisplayId",
+          "in" : "query",
+          "description" : "The display ID of the document.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "maxLength" : 255
+          }
+        }, {
+          "name" : "orderId",
+          "in" : "query",
+          "description" : "The order ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "orderDisplayId",
+          "in" : "query",
+          "description" : "The display ID of the order.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "fulfillmentSystemId",
+          "in" : "query",
+          "description" : "The fulfillment system ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "maxLength" : 255,
+            "type" : "string"
+          }
+        }, {
+          "name" : "fulfillmentSystemType",
+          "in" : "query",
+          "description" : "The fulfillment system type.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "maxLength" : 60,
+            "type" : "string"
+          }
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "description" : "A fulfillment request can have one of the following statuses:",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "DISPATCHING", "DISPATCHED", "PENDING", "CANCELED" ]
+          }
+        }, {
+          "name" : "businessStatus",
+          "in" : "query",
+          "description" : "The custom (user-defined) business status of the fulfillment request. The business status represents a meaningful milestone in your fulfillment process, and is determined by the creation of an order activity specified in your business status transition rules in Business Configuration.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "maxLength" : 255,
+            "type" : "string"
+          }
+        }, {
+          "name" : "dispatchTaskStatus",
+          "in" : "query",
+          "description" : "A dispatch task can have one of the following statuses:",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "RECEIVED", "TRIGGERED", "RETRYING", "TOBECONFIRMED", "SUCCESSFUL", "FAILED", "CANCELED" ]
+          }
+        }, {
+          "name" : "createdAt",
+          "in" : "query",
+          "description" : "The fulfillment request was created at a certain time stamp.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "createdAfter",
+          "in" : "query",
+          "description" : "The fulfillment request was created after a certain time stamp.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "createdBefore",
+          "in" : "query",
+          "description" : "The fulfillment request was created before a certain time stamp.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "You can sort by the supported parameters in ascending or descending order. For example: ?sort=orderId,[asc|desc]&sort=status,[asc|desc].<br>Note that you can’t sort by the createdBefore or createdAfter parameters.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "default" : "createdAt,desc"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "description" : "The result set is returned at a given page number. For example: ?page=2 returns the 2nd page of result set.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "The number of results per page.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The fulfillment requests were successfully retrieved.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/multipleFulfillmentRequestReadResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ]
+      },
+      "patch" : {
+        "tags" : [ "Fulfillment Request" ],
+        "summary" : "Retriggers fulfillment requests.",
+        "description" : "Retriggers key mapping for fulfillment requests that are pending key mapping for the customer or ship-to party. If key mapping is available for a fulfillment request, then the orchestration process is retriggered for the fulfillment request.",
+        "operationId" : "patchFulfillmentRequests",
+        "requestBody" : {
+          "description" : "The fulfillment requests to be retriggered.",
+          "content" : {
+            "application/merge-patch+json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/fulfillmentRequestRetriggerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The request to retrigger fulfillment requests was successful.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/fulfillmentRequestRetriggerResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is invalid or in an inconsistent format. Please check it and try again. <br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                },
+                "example" : {
+                  "error" : {
+                    "code" : "0700-024",
+                    "message" : "Enter a valid fulfillment request ID and ensure that the fulfillment request is in the 'PENDING' status."
+                  }
+                }
+              }
+            }
+          },
+          "413" : {
+            "description" : "The request payload is too large. Reduce the size of your payload and try again.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                },
+                "example" : {
+                  "error" : {
+                    "code" : "0000-018",
+                    "message" : "The request payload exceeds the maximum size of 1.0 MB."
+                  }
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                },
+                "example" : {
+                  "error" : {
+                    "code" : "0100-000",
+                    "message" : "Something went wrong while processing the request. Please contact your technical support."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ],
+        "x-codegen-request-body-name" : "body"
+      }
+    },
+    "/orchestration/fulfillmentRequests/{id}" : {
+      "get" : {
+        "tags" : [ "Fulfillment Request" ],
+        "summary" : "Retrieve fulfillment request.",
+        "description" : "Retrieve a single fulfillment request.",
+        "operationId" : "getFulfillmentRequestById",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "The fulfillment request ID.",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The fulfillment request was successfully retrieved.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/singleFulfillmentRequestReadResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ]
+      }
+    },
+    "/orchestration/planningTasks" : {
+      "get" : {
+        "tags" : [ "Orchestration Planning" ],
+        "summary" : "Retrieve planning tasks.",
+        "description" : "View the status of your planning tasks and monitor them.",
+        "operationId" : "getPlanningTasks",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "query",
+          "description" : "The planning task ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "orderId",
+          "in" : "query",
+          "description" : "The order ID.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        }, {
+          "name" : "orderDisplayId",
+          "in" : "query",
+          "description" : "The display ID of the order.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }, {
+          "name" : "createdAt",
+          "in" : "query",
+          "description" : "The planning task was created at a certain time stamp.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "createdAfter",
+          "in" : "query",
+          "description" : "The planning task was created after a certain time stamp.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "createdBefore",
+          "in" : "query",
+          "description" : "The planning task was created before a certain time stamp.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }, {
+          "name" : "sort",
+          "in" : "query",
+          "description" : "You can sort by the supported parameters in ascending or descending order. For example: ?sort=orderId,[asc|desc]&sort=status,[asc|desc].",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "string",
+            "default" : "createdAt,desc"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "description" : "The result set is returned at a given page number. For example: ?page=2 returns the second page of result set.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "The number of results per page.",
+          "required" : false,
+          "style" : "form",
+          "explode" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The planning tasks were successfully retrieved.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/multiplePlanningTaskReadResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ]
+      }
+    },
+    "/orchestration/planningTasks/{id}" : {
+      "get" : {
+        "tags" : [ "Orchestration Planning" ],
+        "summary" : "Retrieve planning task.",
+        "description" : "Retrieve a single planning task.",
+        "operationId" : "getPlanningTaskById",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "description" : "The planning task ID.",
+          "required" : true,
+          "style" : "simple",
+          "explode" : false,
+          "schema" : {
+            "type" : "string",
+            "format" : "uuid"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "The planning task was successfully retrieved.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/singlePlanningTaskReadResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ]
+      }
+    },
+    "/orchestration/retriggerPlanningTask" : {
+      "patch" : {
+        "tags" : [ "Orchestration Planning" ],
+        "summary" : "Retrigger planning task.",
+        "description" : "Retrigger a planning task.",
+        "operationId" : "retriggerPlanningTask",
+        "requestBody" : {
+          "description" : "The planning task to be retriggered.",
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/planningTaskRetriggerRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "The planning task was successfully retriggered.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/planningTaskRetriggerResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "413" : {
+            "description" : "The maximum request payload size has been exceeded.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/errorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "oauth2" : [ "{identityzone}.DispatchView" ]
+        } ],
+        "x-codegen-request-body-name" : "body"
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "multipleDispatchTaskReadResponse" : {
+        "description" : "The dispatch tasks were successfully retrieved.",
+        "type" : "array",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "description" : "The dispatch task ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "898fc2f9-3b7e-4d4a-b668-395e321e6c5a"
+            },
+            "orderId" : {
+              "description" : "The order ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "dabe136b-8efd-45de-a792-b73596af25f9"
+            },
+            "orderDisplayId" : {
+              "description" : "The display ID of the order.",
+              "type" : "integer",
+              "format" : "int64",
+              "example" : 300001647
+            },
+            "fulfillmentRequestId" : {
+              "description" : "The fulfillment request ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "9f24ff8a-afe5-4057-b012-8ac22796ceb8"
+            },
+            "fulfillmentRequestDisplayId" : {
+              "description" : "Deprecated as of 2025-05-14. The display ID of the fulfillment request.",
+              "type" : "string",
+              "example" : "300001647-01"
+            },
+            "documentId" : {
+              "description" : "The document ID from the fulfillment system.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "31fe398d-15f7-47ff-b5a6-ec39511c4cc3"
+            },
+            "documentNumber" : {
+              "description" : "The document display ID from the fulfillment system.",
+              "type" : "string",
+              "maxLength" : 50,
+              "example" : "73000-B0075"
+            },
+            "status" : {
+              "description" : "The status of the dispatch task.",
+              "type" : "string",
+              "enum" : [ "RECEIVED", "TRIGGERED", "RETRYING", "TOBECONFIRMED", "SUCCESSFUL", "FAILED", "CANCELED" ],
+              "example" : "FAILED"
+            },
+            "targetSystemType" : {
+              "description" : "The target system type.",
+              "type" : "string",
+              "enum" : [ "CUSTOM", "SAP_S4_CLOUD", "SAP_S4_ONPREM", "SAP_ERP", "SAP_SUBSCRIPTION_BILLING" ],
+              "example" : "SAP_S4_CLOUD"
+            },
+            "triggeredAt" : {
+              "description" : "The date and time at which the dispatch task status was last set to 'TRIGGERED'. If orchestration automatically retries to transfer the fulfillment request associated with the dispatch task, then the status of the dispatch task changes to 'TRIGGERED', and each retry updates the value of the 'triggeredAt' attribute.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2022-12-07T23:08:27.014Z"
+            },
+            "updatedAt" : {
+              "description" : "The date and time when the dispatch task was last updated.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2022-12-07T23:13:21.388Z"
+            },
+            "blocked" : {
+              "description" : "The flag to indicate whether a dispatch task is blocked for reasons of data protection and privacy. This field is only visible to users who are assigned the DPPAudit scope for auditing purposes. For information, see the Security section of the Service Guide.",
+              "type" : "boolean",
+              "example" : false
+            },
+            "adapterResponse" : {
+              "description" : "The dispatch task response from the fulfillment system.",
+              "type" : "array",
+              "items" : {
+                "type" : "object",
+                "properties" : {
+                  "type" : {
+                    "description" : "The fulfillment system response type.",
+                    "type" : "string",
+                    "example" : "SUCCESS"
+                  },
+                  "message" : {
+                    "description" : "The fulfillment system response message.",
+                    "type" : "string",
+                    "example" : "Order 104871 has been saved."
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "singleDispatchTaskReadResponse" : {
+        "description" : "A detailed dispatch task is retrieved.",
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "description" : "The dispatch task ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "898fc2f9-3b7e-4d4a-b668-395e321e6c5a"
+          },
+          "orderId" : {
+            "description" : "The order ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "dabe136b-8efd-45de-a792-b73596af25f9"
+          },
+          "orderDisplayId" : {
+            "description" : "The display ID of the order.",
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 300001647
+          },
+          "orderCreatedAt" : {
+            "description" : "The date and time when the order was created.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-08T14:51:05.708Z"
+          },
+          "fulfillmentRequestId" : {
+            "description" : "The fulfillment request ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "9f24ff8a-afe5-4057-b012-8ac22796ceb8"
+          },
+          "fulfillmentRequestDisplayId" : {
+            "description" : "The display ID of the fulfillment request.",
+            "type" : "string",
+            "example" : "300001647-01"
+          },
+          "documentId" : {
+            "description" : "The document ID from the fulfillment system.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "31fe398d-15f7-47ff-b5a6-ec39511c4cc3"
+          },
+          "documentNumber" : {
+            "description" : "The document display ID from the fulfillment system.",
+            "type" : "string",
+            "maxLength" : 50,
+            "example" : "73000-B0075"
+          },
+          "retryCount" : {
+            "description" : "The number of times orchestration retried to transfer the fulfillment request associated with the dispatch task. Manually retriggering the dispatch task resets the retry count.",
+            "type" : "integer",
+            "format" : "int32",
+            "example" : 0
+          },
+          "status" : {
+            "description" : "The status of the dispatch task.",
+            "type" : "string",
+            "enum" : [ "RECEIVED", "TRIGGERED", "RETRYING", "TOBECONFIRMED", "SUCCESSFUL", "FAILED", "CANCELED" ],
+            "example" : "SUCCESSFUL"
+          },
+          "targetSystemType" : {
+            "description" : "The target system type.",
+            "type" : "string",
+            "enum" : [ "CUSTOM", "SAP_S4_CLOUD", "SAP_S4_ONPREM", "SAP_ERP", "SAP_SUBSCRIPTION_BILLING" ],
+            "example" : "SAP_S4_CLOUD"
+          },
+          "triggeredAt" : {
+            "description" : "The date and time at which the dispatch task status was last set to 'TRIGGERED'. If orchestration automatically retries to transfer the fulfillment request associated with the dispatch task, then the status of the dispatch task changes to 'TRIGGERED', and each retry updates the value of the 'triggeredAt' attribute.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-07T23:08:27.014Z"
+          },
+          "updatedAt" : {
+            "description" : "The date and time when the dispatch task was last updated.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-07T23:13:21.388Z"
+          },
+          "blocked" : {
+            "description" : "The flag to indicate whether a dispatch task is blocked for reasons of data protection and privacy. This field is only visible to users who are assigned the DPPAudit scope for auditing purposes. For information, see the Security section of the Service Guide.",
+            "type" : "boolean",
+            "example" : false
+          },
+          "adapterResponse" : {
+            "description" : "The dispatch task response from the fulfillment system",
+            "type" : "object",
+            "properties" : {
+              "messages" : {
+                "type" : "array",
+                "maximum" : 50,
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "type" : {
+                      "description" : "The type of message.",
+                      "type" : "string",
+                      "enum" : [ "SUCCESS", "WARNING", "ERROR" ],
+                      "example" : "SUCCESS"
+                    },
+                    "message" : {
+                      "description" : "The message returned from the fulfillment system.",
+                      "type" : "string",
+                      "maxLength" : 500,
+                      "example" : "At least one ID field must be filled for the partner with role AG."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "orderRequest" : {
+            "description" : "The order request payload after orchestration planning",
+            "type" : "object",
+            "properties" : { }
+          }
+        }
+      },
+      "dispatchTaskRetriggerRequest" : {
+        "type" : "object",
+        "description" : "A list of dispatch tasks to retrigger.<br><br>The request body can be a maximum of 1MB.",
+        "required" : [ "tasks" ],
+        "properties" : {
+          "tasks" : {
+            "type" : "array",
+            "maximum" : 500,
+            "items" : {
+              "type" : "object",
+              "required" : [ "taskId" ],
+              "properties" : {
+                "taskId" : {
+                  "description" : "The dispatch task to retrigger.",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "example" : "85be689f-f32e-4953-adfe-db7c5d2ed846"
+                }
+              }
+            }
+          }
+        }
+      },
+      "dispatchTaskRetriggerResponse" : {
+        "type" : "object",
+        "description" : "A list of retriggered dispatch tasks.",
+        "properties" : {
+          "tasks" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "taskId" : {
+                  "description" : "The retriggered dispatch task.",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "example" : "5209dc25-6b3f-4ce8-ba6e-3850a5d6833d"
+                },
+                "triggered" : {
+                  "description" : "Whether the dispatch task was retriggered.",
+                  "type" : "boolean",
+                  "example" : true
+                },
+                "triggeredAt" : {
+                  "description" : "The date and time at which the dispatch task status was last set to 'TRIGGERED'. If orchestration automatically retries to transfer the fulfillment request associated with the dispatch task, then the status of the dispatch task changes to 'TRIGGERED', and each retry updates the value of the 'triggeredAt' attribute.",
+                  "type" : "string",
+                  "format" : "date-time",
+                  "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+                  "example" : "2022-12-08T19:25:40.449Z"
+                },
+                "message" : {
+                  "description" : "Detailed information about the retriggered dispatch task in case of failure.",
+                  "type" : "string",
+                  "example" : "The dispatch task was not retriggered because it was already completed or retriggered, or it was not found."
+                }
+              }
+            }
+          }
+        }
+      },
+      "dispatchTaskConfirmRequest" : {
+        "description" : "The confirmation request returned from the fulfillment system.<br><br>Maximum 1MB body.",
+        "type" : "object",
+        "required" : [ "fulfillmentRequestId" ],
+        "properties" : {
+          "fulfillmentRequestId" : {
+            "description" : "The fulfillment request ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "d2c7669c-7408-49fd-952f-baef928610a9"
+          },
+          "fulfillmentSystemId" : {
+            "description" : "The system ID from the fulfillment system. This is the ID used by the fulfillment system itself. Note that the original value of this field in the fulfillment request will be overwritten if it differs.",
+            "type" : "string",
+            "maxLength" : 255,
+            "example" : "ABC_123"
+          },
+          "documentId" : {
+            "description" : "The document ID from the fulfillment system.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "89f34a9b-dae8-4dfe-bb6a-4a937f1a3d0e"
+          },
+          "documentNumber" : {
+            "description" : "The document display ID from the fulfillment system.",
+            "type" : "string",
+            "maxLength" : 50,
+            "example" : "73000-B0075"
+          },
+          "messages" : {
+            "type" : "array",
+            "maximum" : 50,
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "type" : {
+                  "description" : "The type of message.",
+                  "type" : "string",
+                  "enum" : [ "SUCCESS", "WARNING", "ERROR" ],
+                  "example" : "SUCCESS"
+                },
+                "message" : {
+                  "description" : "The message returned from the fulfillment system.",
+                  "type" : "string",
+                  "maxLength" : 500,
+                  "example" : "SALES_ITEM_IN was processed successfully."
+                }
+              }
+            }
+          }
+        }
+      },
+      "dispatchTaskConfirmResponse" : {
+        "type" : "object",
+        "description" : "The confirmation response from the fulfillment system.",
+        "properties" : {
+          "fulfillmentRequestId" : {
+            "description" : "The fulfillment request ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "d2c7669c-7408-49fd-952f-baef928610a9"
+          },
+          "fulfillmentSystemId" : {
+            "description" : "The system ID from the fulfillment system. This is the ID used by the fulfillment system itself. Note that the original value of this field in the fulfillment request will be overwritten if it differs.",
+            "type" : "string",
+            "maxLength" : 255,
+            "example" : "ABC_123"
+          },
+          "documentId" : {
+            "description" : "The document ID from the fulfillment system.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "89f34a9b-dae8-4dfe-bb6a-4a937f1a3d0e"
+          },
+          "documentNumber" : {
+            "description" : "The document display ID from the fulfillment system.",
+            "type" : "string",
+            "maxLength" : 50,
+            "example" : "73000-B0075"
+          },
+          "message" : {
+            "description" : "The error message if the dispatch task could not be updated.",
+            "type" : "string",
+            "example" : "The successful order creation message was received."
+          }
+        }
+      },
+      "orchestrationStatusReadResponse" : {
+        "type" : "array",
+        "description" : "Warning: This schema is deprecated.<br><br>A list of order item statuses from the fulfillment system.",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "itemId" : {
+              "description" : "The item ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "15359f66-9d81-47ea-a103-94f5c1c06822"
+            },
+            "itemLineNumber" : {
+              "description" : "The item line number.",
+              "type" : "string",
+              "example" : "10"
+            },
+            "documentNumber" : {
+              "description" : "The document display ID from the fulfillment system.",
+              "type" : "string",
+              "example" : "92809"
+            },
+            "documentItemLineNumber" : {
+              "description" : "The document item line number.",
+              "type" : "string",
+              "example" : "10"
+            },
+            "deliveryStatus" : {
+              "description" : "The item delivery status.",
+              "type" : "string",
+              "enum" : [ "NoDeliveryCreated", "PartialDeliveryCreated", "FullDeliveryCreated" ],
+              "example" : "FullDeliveryCreated"
+            },
+            "processStatus" : {
+              "description" : "The item process status.",
+              "type" : "string",
+              "enum" : [ "Open", "PartiallyCompleted", "Completed" ],
+              "example" : "Completed"
+            },
+            "rejected" : {
+              "description" : "Whether the item was rejected.",
+              "type" : "boolean",
+              "example" : false
+            },
+            "rejectionReasonCode" : {
+              "description" : "The item rejection reason code.",
+              "type" : "string",
+              "example" : "RC_05"
+            },
+            "fulfillmentSystemId" : {
+              "description" : "The fulfillment system ID that is configured in the 'systemId' parameter of the fulfillment channel settings in Business Configuration.",
+              "type" : "string",
+              "maxLength" : 255,
+              "example" : "ABC_123"
+            },
+            "documentLastChangedDateTime" : {
+              "description" : "The date and time when this document was last changed.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2021-03-22T17:27:36.034Z"
+            },
+            "blocked" : {
+              "description" : "The flag to indicate whether an item is part of an order that has been blocked for reasons of data protection and privacy. This field is only visible to users who are assigned the DPPAudit scope for auditing purposes. For information, see the Security section of the Service Guide.",
+              "type" : "boolean",
+              "example" : false
+            }
+          }
+        }
+      },
+      "multipleFulfillmentRequestReadResponse" : {
+        "type" : "array",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "description" : "The fulfillment request ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "fa2e5e67-ed4f-4c20-8353-fa4fbb972665"
+            },
+            "displayId" : {
+              "description" : "The display ID of the fulfillment request.",
+              "type" : "string",
+              "maxLength" : 60,
+              "example" : "300001647-001"
+            },
+            "orderId" : {
+              "description" : "The order ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "dabe136b-8efd-45de-a792-b73596af25f9"
+            },
+            "orderDisplayId" : {
+              "description" : "The display ID of the order.",
+              "type" : "integer",
+              "format" : "int64",
+              "example" : 300001647
+            },
+            "orchestrationRuleKey" : {
+              "description" : "The rule key.",
+              "type" : "string",
+              "maxLength" : 60,
+              "example" : "RULE1"
+            },
+            "orchestrationRuleType" : {
+              "description" : "The rule type.",
+              "type" : "string",
+              "enum" : [ "SAP_ROUTE_BY_HEADER_FIELD", "SAP_SPLIT_BY_ITEM_FIELD", "SAP_SPLIT_BY_SOURCING_FIELD" ],
+              "example" : "SAP_SPLIT_BY_ITEM_FIELD"
+            },
+            "orchestrationRulePath" : {
+              "description" : "The rule path.",
+              "type" : "string",
+              "maxLength" : 150,
+              "example" : "orderItems.itemType"
+            },
+            "crossApplicationNavigationUrl" : {
+              "description" : "The link to the fulfillment system.",
+              "type" : "string",
+              "example" : "https://www.external-system.com:1234/documents?document={documentId}"
+            },
+            "fulfillmentSystemType" : {
+              "description" : "The fulfillment system type.",
+              "type" : "string",
+              "enum" : [ "CUSTOM", "SAP_S4_CLOUD", "SAP_S4_ONPREM", "SAP_ERP", "SAP_SUBSCRIPTION_BILLING", "SAP_PHYSICAL_PRODUCT", "SAP_SUBSCRIPTION_PRODUCT" ],
+              "example" : "SAP_S4_CLOUD"
+            },
+            "fulfillmentSystemId" : {
+              "description" : "The fulfillment system ID that is configured in the 'systemId' parameter of the fulfillment channel settings in Business Configuration. Note that the value of this field can be overwritten by the system ID from the fulfillment system during order confirmation.",
+              "type" : "string",
+              "maxLength" : 255,
+              "example" : "ABC_123"
+            },
+            "destinationName" : {
+              "description" : "The destination name of the fulfillment channel.",
+              "type" : "string",
+              "maxLength" : 60,
+              "example" : "CPI_OMF_TO_ERP_ABC_123"
+            },
+            "externalCustomerKeyMappingSystemId" : {
+              "description" : "The customer master data system ID that is configured in the 'customerKeyMappingSystemId' parameter of the fulfillment channel settings in Business Configuration.",
+              "type" : "string",
+              "maxLength" : 255,
+              "example" : "ABC_123"
+            },
+            "externalCustomerId" : {
+              "description" : "The customer ID in the master data system. This value is determined through key mapping for the customer during orchestration planning.",
+              "type" : "string",
+              "maxLength" : 255,
+              "example" : "0000012345"
+            },
+            "externalShipToPartyId" : {
+              "description" : "The ship-to party ID in the master data system. This value is determined through key mapping for the ship-to party during orchestration planning.",
+              "type" : "string",
+              "maxLength" : 255,
+              "example" : "0000056789"
+            },
+            "oneTimeCustomer" : {
+              "description" : "The flag to indicate if the one-time customer ID present in Business Configuration will be used for the order.",
+              "type" : "boolean",
+              "example" : false
+            },
+            "documentId" : {
+              "description" : "The document ID from the fulfillment system.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "31fe398d-15f7-47ff-b5a6-ec39511c4cc3"
+            },
+            "documentDisplayId" : {
+              "description" : "The document display ID from the fulfillment system.",
+              "type" : "string",
+              "example" : "73000-B0075"
+            },
+            "status" : {
+              "description" : "The status of the fulfillment request.",
+              "type" : "string",
+              "enum" : [ "DISPATCHING", "DISPATCHED", "PENDING", "CANCELED" ],
+              "example" : "DISPATCHED"
+            },
+            "businessStatus" : {
+              "description" : "The custom (user-defined) business status of the fulfillment request. The business status represents a meaningful milestone in your fulfillment process, and is determined by the creation of an order activity specified in your business status transition rules in Business Configuration.",
+              "type" : "string",
+              "example" : "SHIPPED"
+            },
+            "dispatchTaskStatus" : {
+              "description" : "The status of the dispatch task.",
+              "type" : "string",
+              "enum" : [ "RECEIVED", "TRIGGERED", "RETRYING", "TOBECONFIRMED", "SUCCESSFUL", "FAILED", "CANCELED" ],
+              "example" : "FAILED"
+            },
+            "createdAt" : {
+              "description" : "The date and time at which the fulfillment request was created.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2022-12-09T19:40:13.446Z"
+            },
+            "modifiedAt" : {
+              "description" : "The date and time at which the fulfillment request was modified.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2022-12-09T19:40:24.070Z"
+            },
+            "blocked" : {
+              "description" : "The flag to indicate whether a fulfillment request is blocked for reasons of data protection and privacy. This field is only visible to users who are assigned the DPPAudit scope for auditing purposes. For information, see the Security section of the Service Guide.",
+              "type" : "boolean",
+              "example" : false
+            }
+          }
+        }
+      },
+      "singleFulfillmentRequestReadResponse" : {
+        "description" : "Detailed information for the fulfillment request retrieved.",
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "description" : "The fulfillment request ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "fa2e5e67-ed4f-4c20-8353-fa4fbb972665"
+          },
+          "displayId" : {
+            "description" : "The display ID of the fulfillment request.",
+            "type" : "string",
+            "maxLength" : 60,
+            "example" : "300001647-001"
+          },
+          "orderId" : {
+            "description" : "The order ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "dabe136b-8efd-45de-a792-b73596af25f9"
+          },
+          "orderDisplayId" : {
+            "description" : "The display ID of the order.",
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 300001647
+          },
+          "orchestrationRuleKey" : {
+            "description" : "The rule key used during orchestration planning.",
+            "type" : "string",
+            "maxLength" : 60,
+            "example" : "RULE1"
+          },
+          "orchestrationRuleType" : {
+            "description" : "The rule type used during orchestration planning.",
+            "type" : "string",
+            "enum" : [ "SAP_ROUTE_BY_HEADER_FIELD", "SAP_SPLIT_BY_ITEM_FIELD", "SAP_SPLIT_BY_SOURCING_FIELD" ],
+            "example" : "SAP_SPLIT_BY_ITEM_FIELD"
+          },
+          "orchestrationRulePath" : {
+            "description" : "The rule path used during orchestration planning.",
+            "type" : "string",
+            "maxLength" : 150,
+            "example" : "orderItems.itemType"
+          },
+          "crossApplicationNavigationUrl" : {
+            "description" : "The link to the fulfillment system.",
+            "type" : "string",
+            "example" : "https://www.external-system.com:1234/documents?document={documentId}"
+          },
+          "fulfillmentSystemType" : {
+            "description" : "The fulfillment system type.",
+            "type" : "string",
+            "enum" : [ "CUSTOM", "SAP_S4_CLOUD", "SAP_S4_ONPREM", "SAP_ERP", "SAP_SUBSCRIPTION_BILLING", "SAP_PHYSICAL_PRODUCT", "SAP_SUBSCRIPTION_PRODUCT" ],
+            "example" : "SAP_S4_CLOUD"
+          },
+          "fulfillmentSystemId" : {
+            "description" : "The fulfillment system ID that is configured in the 'systemId' parameter of the fulfillment channel settings in Business Configuration. Note that the value of this field can be overwritten by the system ID from the fulfillment system during order confirmation.",
+            "type" : "string",
+            "maxLength" : 255,
+            "example" : "ABC_123"
+          },
+          "destinationName" : {
+            "description" : "The destination name of the fulfillment channel.",
+            "type" : "string",
+            "maxLength" : 60,
+            "example" : "CPI_OMF_TO_ERP_ABC_123"
+          },
+          "externalCustomerKeyMappingSystemId" : {
+            "description" : "The customer master data system ID that is configured in the 'customerKeyMappingSystemId' parameter of the fulfillment channel settings in Business Configuration.",
+            "type" : "string",
+            "maxLength" : 255,
+            "example" : "ABC_123"
+          },
+          "externalCustomerId" : {
+            "description" : "The customer ID in the master data system. This value is determined through key mapping for the customer during orchestration planning.",
+            "type" : "string",
+            "maxLength" : 255,
+            "example" : "0000012345"
+          },
+          "externalShipToPartyId" : {
+            "description" : "The ship-to party ID in the master data system. This value is determined through key mapping for the ship-to party during orchestration planning.",
+            "type" : "string",
+            "maxLength" : 255,
+            "example" : "0000056789"
+          },
+          "oneTimeCustomer" : {
+            "description" : "The flag to indicate if the one-time customer ID present in Business Configuration will be used for the order.",
+            "type" : "boolean",
+            "example" : false
+          },
+          "documentId" : {
+            "description" : "The document ID from the fulfillment system.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "31fe398d-15f7-47ff-b5a6-ec39511c4cc3"
+          },
+          "documentDisplayId" : {
+            "description" : "The document display ID from the fulfillment system.",
+            "type" : "string",
+            "example" : "73000-B0075"
+          },
+          "status" : {
+            "description" : "The status of the fulfillment request.",
+            "type" : "string",
+            "enum" : [ "DISPATCHING", "DISPATCHED", "PENDING", "CANCELED" ],
+            "example" : "DISPATCHED"
+          },
+          "businessStatus" : {
+            "description" : "The custom (user-defined) business status of the fulfillment request. The business status represents a meaningful milestone in your fulfillment process, and is determined by the creation of an order activity specified in your business status transition rules in Business Configuration.",
+            "type" : "string",
+            "example" : "SHIPPED"
+          },
+          "dispatchTaskStatus" : {
+            "description" : "The status of the dispatch task.",
+            "type" : "string",
+            "enum" : [ "RECEIVED", "TRIGGERED", "RETRYING", "TOBECONFIRMED", "SUCCESSFUL", "FAILED", "CANCELED" ],
+            "example" : "SUCCESSFUL"
+          },
+          "createdAt" : {
+            "description" : "The date and time at which the fulfillment request was created.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-09T19:40:13.446Z"
+          },
+          "modifiedAt" : {
+            "description" : "The date and time at which the fulfillment request was modified.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-09T19:40:24.070Z"
+          },
+          "blocked" : {
+            "description" : "The flag to indicate whether a fulfillment request is blocked for reasons of data protection and privacy. This field is only visible to users who are assigned the DPPAudit scope for auditing purposes. For information, see the Security section of the Service Guide.",
+            "type" : "boolean",
+            "example" : false
+          },
+          "taskId" : {
+            "description" : "The dispatch task ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "aa9dc1a7-5845-4173-9f79-ded5c6a9ad60"
+          },
+          "splitOrderPayload" : {
+            "description" : "The order request payload after orchestration planning.",
+            "type" : "object",
+            "properties" : {
+              "metadata" : {
+                "description" : "The metadata for the order.",
+                "type" : "object",
+                "properties" : {
+                  "createdAt" : {
+                    "description" : "The creation date and time for the order.",
+                    "type" : "string",
+                    "format" : "date-time",
+                    "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                    "example" : "2022-12-09T19:40:24.070Z"
+                  }
+                }
+              },
+              "orderId" : {
+                "description" : "The order ID.",
+                "type" : "string",
+                "pattern" : "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+                "example" : "43770a6c-386e-45f8-a3af-c89bec067e72"
+              },
+              "orderDisplayId" : {
+                "description" : "The display ID of the order.",
+                "type" : "integer",
+                "format" : "int64",
+                "example" : 300001647
+              },
+              "description" : {
+                "description" : "The description of the order.",
+                "type" : "string",
+                "maxLength" : 255,
+                "example" : "Sample order"
+              },
+              "precedingDocument" : {
+                "description" : "The document that triggered the order creation.",
+                "type" : "object",
+                "properties" : {
+                  "externalSystemReference" : {
+                    "type" : "object",
+                    "properties" : {
+                      "externalSystemId" : {
+                        "description" : "The ID of the external system where the preceding document was created.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "YourSystem"
+                      },
+                      "externalId" : {
+                        "description" : "The preceding document ID from the external system.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "d2716b94085c4bce88452e1d08e5c0b9"
+                      },
+                      "externalNumber" : {
+                        "description" : "The preceding document number from the external system.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "492"
+                      }
+                    }
+                  }
+                }
+              },
+              "market" : {
+                "description" : "The market for the order.",
+                "type" : "object",
+                "properties" : {
+                  "marketId" : {
+                    "description" : "The ID for the market.",
+                    "type" : "string",
+                    "maxLength" : 255,
+                    "example" : "A1"
+                  },
+                  "salesArea" : {
+                    "description" : "The sales area for the order.",
+                    "type" : "object",
+                    "properties" : {
+                      "distributionChannel" : {
+                        "description" : "The distribution channel.",
+                        "type" : "string",
+                        "example" : "01"
+                      },
+                      "division" : {
+                        "description" : "The division.",
+                        "type" : "string",
+                        "example" : "01"
+                      },
+                      "salesOrganization" : {
+                        "description" : "The sales organization.",
+                        "type" : "string",
+                        "example" : "0001"
+                      }
+                    }
+                  },
+                  "currency" : {
+                    "description" : "The ISO code (ISO 4217) for the currency of the order.",
+                    "type" : "string",
+                    "example" : "USD"
+                  },
+                  "priceType" : {
+                    "description" : "The price type of a given market defined as net or gross.",
+                    "type" : "string",
+                    "enum" : [ "NET", "GROSS" ],
+                    "example" : "NET"
+                  }
+                }
+              },
+              "customer" : {
+                "description" : "The customer information for the order.",
+                "type" : "object",
+                "properties" : {
+                  "cuid" : {
+                    "description" : "The ID for a customer from the master data.",
+                    "type" : "string",
+                    "maxLength" : 36,
+                    "example" : "b9a23ee0-238d-43e9-aa64-666ad1111111"
+                  },
+                  "externalSystemReference" : {
+                    "type" : "object",
+                    "properties" : {
+                      "externalSystemId" : {
+                        "description" : "The external order capture system ID.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "MOC_000"
+                      },
+                      "externalId" : {
+                        "description" : "The customer ID in the external order capture system.",
+                        "type" : "string",
+                        "maxLength" : 36,
+                        "example" : "5c0eec0e-a991-4bd8-976f-4a1eb4a1e4b5"
+                      }
+                    }
+                  },
+                  "guest" : {
+                    "description" : "The flag to indicate if a guest user placed the order.",
+                    "type" : "boolean",
+                    "example" : true
+                  },
+                  "person" : {
+                    "type" : "object",
+                    "properties" : {
+                      "firstName" : {
+                        "description" : "The person's first (given) name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Peter"
+                      },
+                      "middleName" : {
+                        "description" : "The person's middle name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "James"
+                      },
+                      "lastName" : {
+                        "description" : "The person's last (family) name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Wilson"
+                      },
+                      "academicTitle" : {
+                        "description" : "The person's academic title, for example, Dr.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Dr."
+                      },
+                      "name" : {
+                        "description" : "The person's full name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Peter James Wilson"
+                      },
+                      "salutationCode" : {
+                        "description" : "The code of the salutation for the person.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "0001"
+                      }
+                    }
+                  },
+                  "addresses" : {
+                    "type" : "array",
+                    "uniqueItems" : true,
+                    "minItems" : 2,
+                    "maxItems" : 2,
+                    "items" : {
+                      "description" : "The address information for the order.",
+                      "type" : "object",
+                      "properties" : {
+                        "street" : {
+                          "description" : "The street name of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "1st Avenue"
+                        },
+                        "houseNumber" : {
+                          "description" : "The house number of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "111"
+                        },
+                        "poBox" : {
+                          "description" : "The post office box number of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "1100"
+                        },
+                        "postalCode" : {
+                          "description" : "The postal code of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "91999"
+                        },
+                        "city" : {
+                          "description" : "The city of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "New York City"
+                        },
+                        "country" : {
+                          "description" : "The country or region of the address. Only the two-letter ISO code country or region code (ISO 3166-1) is accepted, for example, 'DE', 'US', or 'CA'.",
+                          "type" : "string",
+                          "minLength" : 2,
+                          "maxLength" : 2,
+                          "example" : "US"
+                        },
+                        "district" : {
+                          "description" : "The district of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "Manhattan"
+                        },
+                        "state" : {
+                          "description" : "The state of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "New York"
+                        },
+                        "phone" : {
+                          "description" : "The contact phone number.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "9115558008"
+                        },
+                        "email" : {
+                          "description" : "The contact email address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "example@email.com"
+                        },
+                        "fax" : {
+                          "description" : "The contact fax number.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "555-123-4567"
+                        },
+                        "correspondenceLanguage" : {
+                          "description" : "The correspondence language for the customer.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "English"
+                        },
+                        "addressType" : {
+                          "description" : "The type of the address, for example, the billing or shipping address.",
+                          "type" : "string",
+                          "enum" : [ "SOLD_TO", "BILL_TO", "SHIP_TO" ],
+                          "example" : "SOLD_TO"
+                        },
+                        "additionalAddressInfo" : {
+                          "description" : "Additional information about the billing or shipping address.",
+                          "type" : "string",
+                          "maxLength" : 255
+                        },
+                        "building" : {
+                          "description" : "The building of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "Building 1"
+                        },
+                        "floorNumber" : {
+                          "description" : "The floor number of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "2"
+                        },
+                        "roomNumber" : {
+                          "description" : "The room number of the address.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "203"
+                        },
+                        "person" : {
+                          "type" : "object",
+                          "properties" : {
+                            "firstName" : {
+                              "description" : "The person's first (given) name.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "Peter"
+                            },
+                            "middleName" : {
+                              "description" : "The person's middle name.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "James"
+                            },
+                            "lastName" : {
+                              "description" : "The person's last (family) name.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "Wilson"
+                            },
+                            "academicTitle" : {
+                              "description" : "The person's academic title, for example, Dr.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "Dr."
+                            },
+                            "salutationCode" : {
+                              "description" : "The code of the salutation for the person.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "0001"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "shipToParty" : {
+                "description" : "The information for the customer who will receive the order. The ship-to address must be provided here and not in the main customer information.",
+                "type" : "object",
+                "properties" : {
+                  "cuid" : {
+                    "description" : "The ID for a ship-to party from the master data system.",
+                    "type" : "string",
+                    "maxLength" : 36,
+                    "example" : "b9a23ee0-238d-43e9-aa64-666ad1111111"
+                  },
+                  "externalSystemReference" : {
+                    "type" : "object",
+                    "properties" : {
+                      "externalSystemId" : {
+                        "description" : "The external order capture system ID.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "MOC_000"
+                      },
+                      "externalId" : {
+                        "description" : "The customer ID in the external order capture system.",
+                        "type" : "string",
+                        "maxLength" : 36,
+                        "example" : "5c0eec0e-a991-4bd8-976f-4a1eb4a1e4b5"
+                      }
+                    }
+                  },
+                  "person" : {
+                    "type" : "object",
+                    "properties" : {
+                      "firstName" : {
+                        "description" : "The person's first (given) name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Jane"
+                      },
+                      "middleName" : {
+                        "description" : "The person's middle name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Emily"
+                      },
+                      "lastName" : {
+                        "description" : "The person's last (family) name.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Doe"
+                      },
+                      "academicTitle" : {
+                        "description" : "The person's academic title.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Dr."
+                      },
+                      "salutationCode" : {
+                        "description" : "The code of the salutation.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "0001"
+                      }
+                    }
+                  },
+                  "address" : {
+                    "description" : "The ship-to party address information for the order.",
+                    "type" : "object",
+                    "properties" : {
+                      "street" : {
+                        "description" : "The street name of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "1st Avenue"
+                      },
+                      "houseNumber" : {
+                        "description" : "The house number of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "111"
+                      },
+                      "poBox" : {
+                        "description" : "The post office box number of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "1100"
+                      },
+                      "postalCode" : {
+                        "description" : "The postal code of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "91999"
+                      },
+                      "city" : {
+                        "description" : "The city of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "New York City"
+                      },
+                      "country" : {
+                        "description" : "The country or region of the address. Only the two-letter ISO code country or region code (ISO 3166-1) is accepted, for example, 'DE', 'US', or 'CA'.",
+                        "type" : "string",
+                        "minLength" : 2,
+                        "maxLength" : 2,
+                        "example" : "US"
+                      },
+                      "district" : {
+                        "description" : "The district of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Manhattan"
+                      },
+                      "state" : {
+                        "description" : "The state of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "New York"
+                      },
+                      "phone" : {
+                        "description" : "The contact phone number.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "9115558008"
+                      },
+                      "email" : {
+                        "description" : "The contact email address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "example@email.com"
+                      },
+                      "fax" : {
+                        "description" : "The contact fax number.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "555-123-4567"
+                      },
+                      "correspondenceLanguage" : {
+                        "description" : "The correspondence language for the customer.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "English"
+                      },
+                      "additionalAddressInfo" : {
+                        "description" : "Additional information about the shipping address.",
+                        "type" : "string",
+                        "maxLength" : 255
+                      },
+                      "building" : {
+                        "description" : "The building of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "Building 1"
+                      },
+                      "floorNumber" : {
+                        "description" : "The floor number of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "2"
+                      },
+                      "roomNumber" : {
+                        "description" : "The room number of the address.",
+                        "type" : "string",
+                        "maxLength" : 255,
+                        "example" : "203"
+                      }
+                    }
+                  }
+                }
+              },
+              "payment" : {
+                "description" : "If you are using an integrated payment provider (for example, the SAP digital payments add-on), map the information from your payment provider to this structure. This information is sent to your integrated fulfillment systems for further processing. Note that SAP Order Management foundation does not support direct integration with a payment provider. In addition, if you do not provide payment information in the order payload, the INVOICE payment method is used by default.",
+                "type" : "array",
+                "minItems" : 1,
+                "maxItems" : 10,
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "method" : {
+                      "description" : "The method of payment defined in SAP Order Management foundation.",
+                      "type" : "string",
+                      "enum" : [ "INVOICE", "PAYMENT_CARD", "EXTERNAL_PAYMENT", "DIRECT_DEBIT", "CUSTOM" ],
+                      "example" : "INVOICE"
+                    },
+                    "type" : {
+                      "description" : "The type of electronic payment for external payments.",
+                      "type" : "string",
+                      "maxLength" : 255,
+                      "example" : "DPVI"
+                    },
+                    "cardToken" : {
+                      "description" : "The payment card token provided by the payment service. The token is used to determine the remaining information related to payment card payments. Note that credit card information is not stored in SAP Order Management foundation.",
+                      "type" : "string",
+                      "maxLength" : 255,
+                      "example" : "50000000-0000-0000-0000-000000000000"
+                    },
+                    "authorization" : {
+                      "type" : "object",
+                      "properties" : {
+                        "id" : {
+                          "description" : "The unique identifier for authorization provided by the payment service.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "123456789"
+                        },
+                        "merchantId" : {
+                          "description" : "The unique number issued by the acquirer or payment service provider to identify a merchant to settle external payments.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "12345"
+                        }
+                      }
+                    },
+                    "authorizedAmount" : {
+                      "type" : "object",
+                      "properties" : {
+                        "amount" : {
+                          "description" : "The gross value that is to be billed for external payments. A maximum of 15 digits is allowed before the decimal point, and a maximum of two digits (decimal places) is allowed after.",
+                          "type" : "number",
+                          "format" : "double",
+                          "pattern" : "^\\d{1,15}(\\.\\d{0,2})?$",
+                          "example" : 1000
+                        }
+                      }
+                    },
+                    "paymentServiceProvider" : {
+                      "description" : "The payment service provider sent to the payment system for external payments. For example, you are processing an external payment and send the payment service provider 'PAYPAL' to the SAP digital payments add-on.",
+                      "type" : "string",
+                      "maxLength" : 255,
+                      "example" : "PAYPAL"
+                    },
+                    "transactionId" : {
+                      "description" : "The transaction ID for external payments. If you use this property, you must also provide the payment service provider.",
+                      "type" : "string",
+                      "maxLength" : 255,
+                      "example" : "1234"
+                    },
+                    "customFields" : {
+                      "description" : "The payment can contain custom fields only for a payment method of type 'CUSTOM'. The data must be provided as a JSON object. Content must not include personal or sensitive information. Note that JSON arrays are not accepted and the full request cannot exceed 0.5 MB. Keep this in mind when determining how much data you include in your custom fields.",
+                      "type" : "object"
+                    }
+                  }
+                }
+              },
+              "fees" : {
+                "type" : "array",
+                "minItems" : 0,
+                "maxItems" : 2,
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "category" : {
+                      "description" : "The category of the fee.",
+                      "type" : "string",
+                      "enum" : [ "SHIPPING", "PAYMENT" ],
+                      "example" : "SHIPPING"
+                    },
+                    "originalAmount" : {
+                      "description" : "The initial or base amount of a fee. The maximum value is 9999999999999.999999.",
+                      "type" : "number",
+                      "format" : "double",
+                      "minimum" : 0,
+                      "example" : 20
+                    },
+                    "finalAmount" : {
+                      "description" : "The amount of the fee the customer will be charged. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+                      "type" : "number",
+                      "format" : "double",
+                      "minimum" : 0,
+                      "example" : 22.2
+                    },
+                    "effectiveAmount" : {
+                      "description" : "The original amount of a fee (minus discounts). An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+                      "type" : "number",
+                      "format" : "double",
+                      "minimum" : 0,
+                      "example" : 20
+                    },
+                    "tax" : {
+                      "type" : "object",
+                      "properties" : {
+                        "totalAmount" : {
+                          "description" : "The sum of all taxes applied. The maximum value is 9999999999999.999999.",
+                          "type" : "number",
+                          "format" : "double",
+                          "example" : 2.2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "prices" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "category" : {
+                      "type" : "string",
+                      "description" : "The category of the prices which can be one-time, recurring, or recurring estimate.",
+                      "enum" : [ "ONE_TIME", "RECURRING", "RECURRING_ESTIMATE" ]
+                    },
+                    "period" : {
+                      "type" : "string",
+                      "description" : "The duration for which the charge is applied when the category is recurring, such as monthly.",
+                      "enum" : [ "CALENDAR_MONTHLY", "ANNIVERSARY_MONTHLY", "CALENDAR_QUARTERLY", "ANNIVERSARY_QUARTERLY", "CALENDAR_HALF_YEARLY", "ANNIVERSARY_HALF_YEARLY", "CALENDAR_YEARLY", "ANNIVERSARY_YEARLY" ],
+                      "example" : "CALENDAR_MONTHLY"
+                    },
+                    "itemsSubtotal" : {
+                      "type" : "object",
+                      "properties" : {
+                        "effectiveAmount" : {
+                          "description" : "The effective amount of the items subtotal.",
+                          "type" : "number",
+                          "example" : 20
+                        },
+                        "finalAmount" : {
+                          "description" : "The final amount of the items subtotal.",
+                          "type" : "number",
+                          "example" : 174.24
+                        },
+                        "originalAmount" : {
+                          "description" : "The original amount of the items subtotal.",
+                          "type" : "number",
+                          "example" : 20
+                        },
+                        "tax" : {
+                          "type" : "object",
+                          "properties" : {
+                            "totalAmount" : {
+                              "description" : "The total amount of tax applied.",
+                              "type" : "number",
+                              "example" : 4
+                            },
+                            "lines" : {
+                              "type" : "array",
+                              "items" : {
+                                "type" : "object",
+                                "properties" : {
+                                  "amount" : {
+                                    "description" : "The amount of the tax line.",
+                                    "type" : "number",
+                                    "example" : 4
+                                  },
+                                  "code" : {
+                                    "description" : "The code of the tax line.",
+                                    "type" : "string",
+                                    "example" : "1- NY"
+                                  },
+                                  "name" : {
+                                    "description" : "The name of the tax line.",
+                                    "type" : "string",
+                                    "example" : "State Tax"
+                                  },
+                                  "rate" : {
+                                    "description" : "The rate of the tax line expressed as a percentage.",
+                                    "type" : "number",
+                                    "format" : "double",
+                                    "example" : 10
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "discount" : {
+                          "description" : "The discount applied to the items subtotal.",
+                          "type" : "object",
+                          "properties" : {
+                            "totalAmount" : {
+                              "type" : "number",
+                              "format" : "double",
+                              "minimum" : 0,
+                              "maximum" : 1.0E13,
+                              "description" : "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+                              "example" : 10
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "feesSubtotal" : {
+                      "type" : "object",
+                      "properties" : {
+                        "effectiveAmount" : {
+                          "description" : "The effective amount of the fees subtotal.",
+                          "type" : "number",
+                          "example" : 20
+                        },
+                        "finalAmount" : {
+                          "description" : "The final amount of the fees subtotal.",
+                          "type" : "number",
+                          "example" : 174.24
+                        },
+                        "originalAmount" : {
+                          "description" : "The original amount of the fees subtotal.",
+                          "type" : "number",
+                          "example" : 20
+                        },
+                        "tax" : {
+                          "type" : "object",
+                          "properties" : {
+                            "totalAmount" : {
+                              "description" : "The total amount of tax applied.",
+                              "type" : "number",
+                              "example" : 4
+                            },
+                            "lines" : {
+                              "type" : "array",
+                              "items" : {
+                                "type" : "object",
+                                "properties" : {
+                                  "amount" : {
+                                    "description" : "The amount of the tax line.",
+                                    "type" : "number",
+                                    "example" : 4
+                                  },
+                                  "code" : {
+                                    "description" : "The code of the tax line.",
+                                    "type" : "string",
+                                    "example" : "1- NY"
+                                  },
+                                  "name" : {
+                                    "description" : "The name of the tax line.",
+                                    "type" : "string",
+                                    "example" : "State Tax"
+                                  },
+                                  "rate" : {
+                                    "description" : "The rate of the tax line expressed as a percentage.",
+                                    "type" : "number",
+                                    "format" : "double",
+                                    "example" : 10
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "discount" : {
+                          "description" : "The discount applied to the fees subtotal.",
+                          "type" : "object",
+                          "properties" : {
+                            "totalAmount" : {
+                              "type" : "number",
+                              "format" : "double",
+                              "minimum" : 0,
+                              "maximum" : 1.0E13,
+                              "description" : "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+                              "example" : 10
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "total" : {
+                      "type" : "object",
+                      "properties" : {
+                        "effectiveAmount" : {
+                          "description" : "The effective amount of the total.",
+                          "type" : "number",
+                          "example" : 20
+                        },
+                        "finalAmount" : {
+                          "description" : "The final amount of the total.",
+                          "type" : "number",
+                          "example" : 174.24
+                        },
+                        "originalAmount" : {
+                          "description" : "The original amount of the total.",
+                          "type" : "number",
+                          "example" : 20
+                        },
+                        "tax" : {
+                          "type" : "object",
+                          "properties" : {
+                            "totalAmount" : {
+                              "description" : "The total amount of tax applied.",
+                              "type" : "number",
+                              "example" : 4
+                            },
+                            "lines" : {
+                              "type" : "array",
+                              "items" : {
+                                "type" : "object",
+                                "properties" : {
+                                  "amount" : {
+                                    "description" : "The amount of the tax line.",
+                                    "type" : "number",
+                                    "example" : 4
+                                  },
+                                  "code" : {
+                                    "description" : "The code of the tax line.",
+                                    "type" : "string",
+                                    "example" : "1- NY"
+                                  },
+                                  "name" : {
+                                    "description" : "The name of the tax line.",
+                                    "type" : "string",
+                                    "example" : "State Tax"
+                                  },
+                                  "rate" : {
+                                    "description" : "The rate of the tax line expressed as a percentage.",
+                                    "type" : "number",
+                                    "format" : "double",
+                                    "example" : 10
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "discount" : {
+                          "description" : "The discount applied to the total.",
+                          "type" : "object",
+                          "properties" : {
+                            "totalAmount" : {
+                              "type" : "number",
+                              "format" : "double",
+                              "minimum" : 0,
+                              "maximum" : 1.0E13,
+                              "description" : "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+                              "example" : 10
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "discount" : {
+                "description" : "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+                "type" : "object",
+                "properties" : {
+                  "totalAmount" : {
+                    "description" : "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+                    "type" : "number",
+                    "format" : "double",
+                    "example" : 2.55
+                  },
+                  "lines" : {
+                    "description" : "Detailed information about discounts to be calculated, such as the amount and rate of the discount.",
+                    "type" : "array",
+                    "items" : {
+                      "type" : "object",
+                      "properties" : {
+                        "amount" : {
+                          "description" : "The amount of the discount. The maximum value is 9999999999999.999999.",
+                          "type" : "number",
+                          "format" : "double",
+                          "example" : 2.55
+                        },
+                        "sequenceNumber" : {
+                          "description" : "The position of this discount in the sequence of discounts applied to the item.",
+                          "type" : "integer",
+                          "format" : "int64",
+                          "example" : 1
+                        },
+                        "basedOn" : {
+                          "description" : "The preceding sequence number, on which the current discount is applied. If the discount is the first applied in the sequence, the value of this field should be null.",
+                          "type" : "integer",
+                          "format" : "int64",
+                          "example" : 0
+                        },
+                        "rate" : {
+                          "description" : "The discount rate, expressed as a percentage.",
+                          "type" : "number",
+                          "format" : "double",
+                          "example" : 10
+                        },
+                        "promotionId" : {
+                          "description" : "The promotion ID.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "PROMO123"
+                        },
+                        "promotionDescription" : {
+                          "description" : "The promotion description.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "10% off"
+                        },
+                        "externalPromotionType" : {
+                          "description" : "The promotion type.",
+                          "type" : "string",
+                          "maxLength" : 255,
+                          "example" : "ZRC1"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "orderItems" : {
+                "type" : "array",
+                "minItems" : 1,
+                "maxItems" : 1000,
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "itemId" : {
+                      "description" : "The unique identifier of the order item.",
+                      "type" : "string",
+                      "pattern" : "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+                      "example" : "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                    },
+                    "itemType" : {
+                      "description" : "The item type, such as physical item (for physical products) or subscription item (for subscription products).",
+                      "type" : "string",
+                      "enum" : [ "PHYSICAL", "SUBSCRIPTION" ],
+                      "example" : "PHYSICAL"
+                    },
+                    "product" : {
+                      "type" : "object",
+                      "properties" : {
+                        "fulfillmentSystemReference" : {
+                          "type" : "object",
+                          "properties" : {
+                            "systemId" : {
+                              "description" : "The product master data system ID. This system can be the fulfillment system itself or an external system for product master data.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "ABC_123"
+                            },
+                            "id" : {
+                              "description" : "The product ID in the product master data system.",
+                              "type" : "string",
+                              "maxLength" : 255,
+                              "example" : "0000056789"
+                            }
+                          }
+                        },
+                        "name" : {
+                          "description" : "The name of the product.",
+                          "type" : "string",
+                          "example" : "Generic black shoes"
+                        }
+                      }
+                    },
+                    "price" : {
+                      "type" : "object",
+                      "properties" : {
+                        "aspectsData" : {
+                          "type" : "object",
+                          "properties" : {
+                            "physicalItemPrice" : {
+                              "description" : "The pricing information for physical items in orders.",
+                              "type" : "object",
+                              "properties" : {
+                                "priceTotals" : {
+                                  "description" : "The price totals for the item.",
+                                  "type" : "array",
+                                  "items" : {
+                                    "type" : "object",
+                                    "properties" : {
+                                      "originalAmount" : {
+                                        "description" : "The initial or base price of a product, comprising the unit price multiplied by the quantity. The maximum value is 9999999999999.999999.",
+                                        "type" : "number",
+                                        "format" : "double",
+                                        "minimum" : 0,
+                                        "example" : 17.55
+                                      },
+                                      "effectiveAmount" : {
+                                        "description" : "The original amount minus discounts. An effective amount is mandatory when the price type of the market is defined as net. The maximum value is 9999999999999.999999.",
+                                        "type" : "number",
+                                        "format" : "double",
+                                        "minimum" : 0,
+                                        "example" : 15
+                                      },
+                                      "finalAmount" : {
+                                        "description" : "The amount that the customer will be charged for the quantity ordered. A final amount is mandatory when the price type of the market is defined as gross. The maximum value is 9999999999999.999999.",
+                                        "type" : "number",
+                                        "format" : "double",
+                                        "minimum" : 0,
+                                        "example" : 18
+                                      },
+                                      "discount" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                          "totalAmount" : {
+                                            "description" : "The sum of all discounts applied. The maximum value is 9999999999999.999999.",
+                                            "type" : "number",
+                                            "format" : "double",
+                                            "example" : 2.55
+                                          },
+                                          "lines" : {
+                                            "type" : "array",
+                                            "items" : {
+                                              "type" : "object",
+                                              "properties" : {
+                                                "amount" : {
+                                                  "description" : "The amount of the discount. The maximum value is 9999999999999.999999.",
+                                                  "type" : "number",
+                                                  "format" : "double",
+                                                  "example" : 2.55
+                                                },
+                                                "externalPromotionType" : {
+                                                  "description" : "The promotion type.",
+                                                  "type" : "string",
+                                                  "maxLength" : 255,
+                                                  "example" : "Promotion"
+                                                }
+                                              }
+                                            }
+                                          }
+                                        }
+                                      },
+                                      "tax" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                          "lines" : {
+                                            "type" : "array",
+                                            "items" : {
+                                              "type" : "object",
+                                              "properties" : {
+                                                "amount" : {
+                                                  "type" : "number",
+                                                  "example" : 2
+                                                },
+                                                "code" : {
+                                                  "type" : "string",
+                                                  "example" : "1- NY"
+                                                },
+                                                "name" : {
+                                                  "type" : "string",
+                                                  "example" : "State Tax"
+                                                },
+                                                "rate" : {
+                                                  "type" : "number",
+                                                  "example" : 20
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "totalAmount" : {
+                                            "type" : "number",
+                                            "example" : 2
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "subscriptionItemPrice" : {
+                              "description" : "The pricing information for subscription items in orders.",
+                              "type" : "object",
+                              "properties" : {
+                                "pricingStrategy" : {
+                                  "description" : "Determines the pricing for a subscription item.",
+                                  "type" : "object",
+                                  "properties" : {
+                                    "id" : {
+                                      "description" : "The unique identifier of the pricing strategy.",
+                                      "type" : "string",
+                                      "pattern" : "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$",
+                                      "example" : "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                    }
+                                  }
+                                },
+                                "priceTotals" : {
+                                  "type" : "array",
+                                  "items" : {
+                                    "type" : "object",
+                                    "properties" : {
+                                      "category" : {
+                                        "type" : "string",
+                                        "description" : "The category of the prices which can be one-time, recurring, or recurring estimate.",
+                                        "enum" : [ "ONE_TIME", "RECURRING", "RECURRING_ESTIMATE" ]
+                                      },
+                                      "effectiveAmount" : {
+                                        "type" : "number",
+                                        "example" : 35
+                                      },
+                                      "finalAmount" : {
+                                        "type" : "number",
+                                        "example" : 36.75
+                                      },
+                                      "originalAmount" : {
+                                        "type" : "number",
+                                        "example" : 35
+                                      },
+                                      "period" : {
+                                        "type" : "string",
+                                        "description" : "The duration for which the charge is applied when the category is recurring, such as monthly.",
+                                        "enum" : [ "CALENDAR_MONTHLY", "ANNIVERSARY_MONTHLY", "CALENDAR_QUARTERLY", "ANNIVERSARY_QUARTERLY", "CALENDAR_HALF_YEARLY", "ANNIVERSARY_HALF_YEARLY", "CALENDAR_YEARLY", "ANNIVERSARY_YEARLY" ],
+                                        "example" : "CALENDAR_MONTHLY"
+                                      },
+                                      "tax" : {
+                                        "type" : "object",
+                                        "properties" : {
+                                          "lines" : {
+                                            "type" : "array",
+                                            "items" : {
+                                              "type" : "object",
+                                              "properties" : {
+                                                "amount" : {
+                                                  "type" : "number",
+                                                  "example" : 1.75
+                                                },
+                                                "code" : {
+                                                  "type" : "string",
+                                                  "example" : "GST"
+                                                },
+                                                "name" : {
+                                                  "type" : "string",
+                                                  "example" : "GST"
+                                                },
+                                                "rate" : {
+                                                  "type" : "number",
+                                                  "example" : 5
+                                                }
+                                              }
+                                            }
+                                          },
+                                          "totalAmount" : {
+                                            "type" : "number",
+                                            "example" : 1.75
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "quantity" : {
+                      "type" : "object",
+                      "properties" : {
+                        "value" : {
+                          "description" : "The quantity of an item ordered. The number can be an integer or a decimal (for example, 1 or 1.5 tons). If you are using SAP Subscription Billing, the value must be an integer no less than 1, and must not exceed 9999.",
+                          "type" : "number",
+                          "format" : "double",
+                          "pattern" : "^\\d{1,10}(\\.\\d{0,3})?$",
+                          "example" : 2
+                        },
+                        "unit" : {
+                          "description" : "The code for the unit of measure in which typically the stock of a product is managed.",
+                          "type" : "string",
+                          "maxLength" : 3,
+                          "example" : "EA"
+                        }
+                      }
+                    },
+                    "lineNumber" : {
+                      "description" : "The number representing the sequence of an order item within an order. For example, '1' is the value of the lineNumber for the first order item within an order. Note that the maximum length of this field is determined by the fulfillment system. For example, '6' is the maximum length for SAP S/4HANA.",
+                      "type" : "string",
+                      "pattern" : "^\\d{1,10}$",
+                      "example" : "1"
+                    },
+                    "referenceId" : {
+                      "description" : "The unique ID for the order item in the external order capture system (for example, a Web shop) in which the order was originally placed. This field is required if you are using sourcing.",
+                      "type" : "string",
+                      "maxLength" : 36,
+                      "example" : "1"
+                    },
+                    "fulfillment" : {
+                      "type" : "object",
+                      "properties" : {
+                        "cancellation" : {
+                          "type" : "object",
+                          "properties" : {
+                            "canceled" : {
+                              "type" : "boolean",
+                              "example" : true
+                            },
+                            "cancellationDate" : {
+                              "type" : "string",
+                              "format" : "date-time",
+                              "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                              "example" : "2022-12-09T19:40:24.070Z"
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "customFields" : {
+                      "description" : "Customized data in the format of a JSON object for an order item.",
+                      "type" : "object"
+                    },
+                    "aspectsData" : {
+                      "description" : "Relevant for subscription items and physical items.",
+                      "type" : "object",
+                      "properties" : {
+                        "physicalItem" : {
+                          "description" : "Deprecated as of 2024-01-24. Use the 'shipment' object of the outbound fulfillment request instead.<br><br>The information for a physical item in an order.",
+                          "type" : "object",
+                          "deprecated" : true,
+                          "properties" : {
+                            "scheduleLines" : {
+                              "type" : "array",
+                              "deprecated" : true,
+                              "items" : {
+                                "type" : "object",
+                                "properties" : {
+                                  "availableFrom" : {
+                                    "description" : "Deprecated as of 2024-01-24.<br><br>The start of the validity period for physical items.",
+                                    "type" : "string",
+                                    "format" : "date-time",
+                                    "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                    "example" : "2019-09-28T00:00:00.000Z",
+                                    "deprecated" : true
+                                  },
+                                  "deliverySource" : {
+                                    "description" : "Deprecated as of 2024-01-24. Use the 'fulfillmentSite' object instead.<br><br>The source from which the order items will be shipped to the customer.",
+                                    "type" : "object",
+                                    "deprecated" : true,
+                                    "properties" : {
+                                      "dropShipId" : {
+                                        "description" : "Deprecated as of 2024-01-24. Use the 'dropShipId' parameter of the 'fulfillmentSite' object instead.<br><br>The vendor ID for the delivery source when drop-ship delivery is used.",
+                                        "type" : "string",
+                                        "maxLength" : 36,
+                                        "example" : "DROP01",
+                                        "deprecated" : true
+                                      },
+                                      "sourceId" : {
+                                        "description" : "Deprecated as of 2024-01-24. Use the 'id' parameter of the 'fulfillmentSite' object instead.<br><br>The unique identifier of the delivery source.",
+                                        "type" : "string",
+                                        "maxLength" : 36,
+                                        "example" : "DC01",
+                                        "deprecated" : true
+                                      },
+                                      "sourceName" : {
+                                        "description" : "Deprecated as of 2024-01-24.<br><br>The name of the delivery source.",
+                                        "type" : "string",
+                                        "maxLength" : 255,
+                                        "example" : "DC site 01",
+                                        "deprecated" : true
+                                      },
+                                      "sourceType" : {
+                                        "description" : "Deprecated as of 2024-01-24.<br><br>The type of the delivery source.",
+                                        "type" : "string",
+                                        "maxLength" : 255,
+                                        "example" : "DC",
+                                        "deprecated" : true
+                                      }
+                                    }
+                                  },
+                                  "expectedDeliveryDate" : {
+                                    "description" : "Deprecated as of 2024-01-24. Use the 'expectedDeliveryDate' parameter in the 'shipment' object instead.<br><br>The date on which the full shipment is expected to be delivered.",
+                                    "type" : "string",
+                                    "format" : "date-time",
+                                    "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                    "example" : "2022-01-04T12:53:22.247Z",
+                                    "deprecated" : true
+                                  },
+                                  "expectedShippingDate" : {
+                                    "description" : "Deprecated as of 2024-01-24. Use the 'expectedShippingDate' parameter in the 'shipment' object instead.<br><br>The date on which the full shipment is expected to be shipped.",
+                                    "type" : "string",
+                                    "format" : "date-time",
+                                    "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                    "example" : "2022-01-03T12:53:22.247Z",
+                                    "deprecated" : true
+                                  },
+                                  "quantity" : {
+                                    "type" : "object",
+                                    "deprecated" : true,
+                                    "properties" : {
+                                      "value" : {
+                                        "description" : "Deprecated as of 2024-01-24. Use the 'value' parameter in the 'orderItems' array instead.<br><br>The quantity of an item ordered. The number can be an integer or a decimal (for example, 1 or 1.5 tons). A maximum of 10 digits is allowed before the decimal point, and a maximum of three digits (decimal places) is allowed after.",
+                                        "type" : "number",
+                                        "format" : "double",
+                                        "pattern" : "^\\d{1,10}(\\.\\d{0,3})?$",
+                                        "example" : 1,
+                                        "deprecated" : true
+                                      },
+                                      "unit" : {
+                                        "description" : "Deprecated as of 2024-01-24. Use the 'unit' parameter in the 'orderItems' array instead.<br><br>The code for the unit of measure in which typically the stock of a product is managed.",
+                                        "type" : "string",
+                                        "maxLength" : 3,
+                                        "example" : "EA",
+                                        "deprecated" : true
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "subscriptionItem" : {
+                          "description" : "The information for a subscription item in an order.",
+                          "type" : "object",
+                          "properties" : {
+                            "numberOfWaiverPeriods" : {
+                              "description" : "The number of billing cycles for which recurring charges are waived after the start of the subscription.",
+                              "type" : "integer",
+                              "example" : 0
+                            },
+                            "validFrom" : {
+                              "description" : "The start of the validity period for subscription items.",
+                              "type" : "string",
+                              "format" : "date-time",
+                              "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                              "example" : "2023-09-05T22:13:42.666Z"
+                            },
+                            "validTo" : {
+                              "description" : "The end of the validity period for subscription items.",
+                              "type" : "string",
+                              "format" : "date-time",
+                              "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                              "example" : "2023-10-05T22:13:42.666Z"
+                            },
+                            "contractTerm" : {
+                              "description" : "The information for the contract term for a subscription item. This represents the minimum contract term of the subscription. During the minimum term, the subscription cannot be canceled.",
+                              "type" : "object",
+                              "properties" : {
+                                "period" : {
+                                  "description" : "The period of the minimum contract term in months.",
+                                  "type" : "integer",
+                                  "minimum" : 1,
+                                  "maximum" : 999,
+                                  "example" : 999
+                                },
+                                "endDate" : {
+                                  "description" : "The end date of the minimum contract term for a subscription item.",
+                                  "type" : "string",
+                                  "format" : "date-time",
+                                  "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                                  "example" : "2023-10-05T22:13:42.666Z"
+                                }
+                              }
+                            },
+                            "renewalTerm" : {
+                              "description" : "The period by which the subscription automatically extends after the minimum contract term.",
+                              "type" : "object",
+                              "properties" : {
+                                "period" : {
+                                  "description" : "The length of the renewal term in months.",
+                                  "type" : "integer",
+                                  "minimum" : 1,
+                                  "maximum" : 999,
+                                  "example" : 999
+                                }
+                              }
+                            },
+                            "cancellationPolicy" : {
+                              "description" : "Information for the cancellation.",
+                              "type" : "object",
+                              "properties" : {
+                                "allowMidBillCycleExpiration" : {
+                                  "description" : "The flag to determine whether a subscription may expire in the middle of a billing cycle.",
+                                  "type" : "boolean",
+                                  "example" : true
+                                },
+                                "termOfNotice" : {
+                                  "description" : "The period of time to be observed if a customer wants to cancel a subscription.",
+                                  "type" : "integer",
+                                  "example" : 0
+                                }
+                              }
+                            },
+                            "overwriteContractTerm" : {
+                              "description" : "The flag to determine whether the subscription terms predefined in the product can be overwritten.",
+                              "type" : "boolean",
+                              "example" : true
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "sourcing" : {
+                "description" : "The sourcing-related information for an order.",
+                "type" : "object",
+                "properties" : {
+                  "shipments" : {
+                    "description" : "The shipment information for the order.",
+                    "type" : "array",
+                    "uniqueItems" : true,
+                    "items" : {
+                      "type" : "object",
+                      "properties" : {
+                        "fulfillmentSite" : {
+                          "description" : "The site from which the order items will be shipped to the customer.",
+                          "type" : "object",
+                          "properties" : {
+                            "id" : {
+                              "description" : "The unique identifier of the fulfillment site.",
+                              "type" : "string",
+                              "maxLength" : 36,
+                              "example" : "site-id-1"
+                            },
+                            "dropShipId" : {
+                              "description" : "The vendor ID for the fulfillment site when drop-ship delivery is used.",
+                              "type" : "string",
+                              "maxLength" : 36,
+                              "example" : "dropship-id-1"
+                            }
+                          }
+                        },
+                        "delivery" : {
+                          "description" : "The delivery-related information for the order.",
+                          "type" : "object",
+                          "properties" : {
+                            "deliveryOption" : {
+                              "description" : "The delivery option applicable to the order.",
+                              "type" : "string",
+                              "maxLength" : 50,
+                              "example" : "EXPRESS"
+                            },
+                            "expectedDeliveryDate" : {
+                              "description" : "The date on which the full shipment is expected to be delivered.",
+                              "type" : "string",
+                              "format" : "date-time",
+                              "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                              "example" : "2023-09-21T09:22:16.461"
+                            }
+                          }
+                        },
+                        "expectedShippingDate" : {
+                          "description" : "The date on which the full shipment is expected to be shipped.",
+                          "type" : "string",
+                          "format" : "date-time",
+                          "pattern" : "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                          "example" : "2023-09-20T09:22:16.461"
+                        },
+                        "customFields" : {
+                          "description" : "Customized shipping-related data in the format of a JSON object.",
+                          "type" : "object"
+                        },
+                        "reservation" : {
+                          "description" : "The reservation-related information for the shipment.",
+                          "type" : "object",
+                          "properties" : {
+                            "id" : {
+                              "description" : "The unique identifier of the reservation.",
+                              "type" : "string",
+                              "maxLength" : 36,
+                              "example" : "reservation-id-1"
+                            },
+                            "status" : {
+                              "description" : "The status of the reservation.",
+                              "type" : "string",
+                              "enum" : [ "PENDING", "CONFIRMED", "CONFIRMATION_FAILED", "DELETED", "DELETION_FAILED" ],
+                              "example" : "PENDING"
+                            }
+                          }
+                        },
+                        "items" : {
+                          "description" : "The products to be shipped to the customer. Each shipment item has a corresponding order item within the order, and vice versa.",
+                          "type" : "array",
+                          "items" : {
+                            "type" : "object",
+                            "properties" : {
+                              "referenceId" : {
+                                "description" : "The unique ID for the order item in the external order capture system (for example, a Web shop) in which the order was originally placed. This must match the order item reference ID within the order item list.",
+                                "type" : "string",
+                                "maxLength" : 36,
+                                "example" : "item1"
+                              },
+                              "quantity" : {
+                                "type" : "object",
+                                "properties" : {
+                                  "value" : {
+                                    "description" : "The quantity of an item ordered. The number can be an integer or a decimal (for example, 1 or 1.5 tons). A maximum of 10 digits is allowed before the decimal point, and a maximum of three digits (decimal places) is allowed after.",
+                                    "type" : "number",
+                                    "format" : "double",
+                                    "pattern" : "^\\d{1,10}(\\.\\d{0,3})?$",
+                                    "example" : 1
+                                  },
+                                  "unit" : {
+                                    "description" : "The code for the unit of measure in which typically the stock of a product is managed.",
+                                    "type" : "string",
+                                    "maxLength" : 3,
+                                    "example" : "EA"
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "customFields" : {
+                "description" : "Customized data in the format of a JSON object for an order.",
+                "type" : "object"
+              },
+              "aspectsData" : {
+                "type" : "object",
+                "deprecated" : true,
+                "description" : "Deprecated as of 2024-01-24. Use the 'shipment' object instead.",
+                "properties" : {
+                  "reservationId" : {
+                    "type" : "string",
+                    "deprecated" : true,
+                    "maxLength" : 36,
+                    "example" : "reservation-id"
+                  },
+                  "externalSourcing" : {
+                    "type" : "boolean",
+                    "deprecated" : true,
+                    "example" : true
+                  },
+                  "deliveryOption" : {
+                    "type" : "string",
+                    "deprecated" : true,
+                    "maxLength" : 50,
+                    "example" : "EXPRESS"
+                  }
+                }
+              }
+            }
+          },
+          "fulfillmentRequestItems" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "description" : "The fulfillment request item ID.",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "example" : "43770a6c-386e-45f8-a3af-c89bec067e72"
+                },
+                "orderItemId" : {
+                  "description" : "The order item ID.",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "example" : "8af18cdb-56a6-4236-b9d5-25ef856f0b14"
+                },
+                "orderItemDisplayId" : {
+                  "description" : "The display ID of the order item.",
+                  "type" : "string",
+                  "example" : "1"
+                },
+                "displayId" : {
+                  "description" : "The display ID of the fulfillment request item.",
+                  "type" : "string",
+                  "example" : "2"
+                },
+                "quantity" : {
+                  "type" : "object",
+                  "properties" : {
+                    "value" : {
+                      "description" : "The quantity of the fulfillment request item.",
+                      "pattern" : "^(\\d{1,10}\\.\\d{0,3})|(\\d{1,13})$",
+                      "type" : "number",
+                      "example" : "2"
+                    },
+                    "unit" : {
+                      "description" : "The code for the unit of measure of the fulfillment request item.",
+                      "maxLength" : 3,
+                      "type" : "string",
+                      "example" : "EA"
+                    }
+                  }
+                },
+                "status" : {
+                  "description" : "The status of the fulfillment request item.",
+                  "type" : "string",
+                  "enum" : [ "CREATED", "CANCELED" ]
+                },
+                "createdAt" : {
+                  "description" : "The date and time at which the fulfillment request item was added to the fulfillment request.",
+                  "type" : "string",
+                  "format" : "date-time",
+                  "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+                  "example" : "2022-12-09T19:40:24.070Z"
+                },
+                "modifiedAt" : {
+                  "description" : "The date and time at which the fulfillment request item was modified.",
+                  "type" : "string",
+                  "format" : "date-time",
+                  "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+                  "example" : "2022-12-09T19:44:24.070Z"
+                }
+              }
+            }
+          }
+        }
+      },
+      "fulfillmentRequestRetriggerRequest" : {
+        "type" : "object",
+        "description" : "A list of fulfillment requests to retrigger.<br><br>Maximum 1MB bytes body.",
+        "required" : [ "fulfillmentRequests" ],
+        "properties" : {
+          "fulfillmentRequests" : {
+            "type" : "array",
+            "maximum" : 50,
+            "items" : {
+              "type" : "object",
+              "required" : [ "id", "action" ],
+              "properties" : {
+                "id" : {
+                  "description" : "The ID of the fulfillment request to retrigger.",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "example" : "f876e666-ed01-4435-8ff2-8f3e8a276389"
+                },
+                "action" : {
+                  "description" : "The action to take on the fulfillment request.",
+                  "type" : "string",
+                  "enum" : [ "RETRIGGER" ],
+                  "maxLength" : 20,
+                  "example" : "RETRIGGER"
+                }
+              }
+            }
+          }
+        }
+      },
+      "fulfillmentRequestRetriggerResponse" : {
+        "type" : "object",
+        "description" : "A list of fulfillment requests for which retriggering was requested.",
+        "properties" : {
+          "fulfillmentRequests" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "description" : "The ID of the retriggered fulfillment request.",
+                  "type" : "string",
+                  "format" : "uuid",
+                  "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+                  "example" : "f876e666-ed01-4435-8ff2-8f3e8a276389"
+                },
+                "triggered" : {
+                  "description" : "Whether the fulfillment request was retriggered.",
+                  "type" : "boolean",
+                  "example" : true
+                },
+                "triggeredAt" : {
+                  "description" : "The date and time at which the fulfillment request was retriggered.",
+                  "type" : "string",
+                  "format" : "date-time",
+                  "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+                  "example" : "2022-12-08T19:25:40.449Z"
+                },
+                "message" : {
+                  "description" : "Detailed information about the retriggered fulfillment request in case of failure.",
+                  "type" : "string",
+                  "example" : "Enter a valid fulfillment request ID and ensure that the fulfillment request is in the 'PENDING' status."
+                }
+              }
+            }
+          }
+        }
+      },
+      "multiplePlanningTaskReadResponse" : {
+        "description" : "A list of retrieved planning tasks.",
+        "type" : "array",
+        "items" : {
+          "type" : "object",
+          "properties" : {
+            "id" : {
+              "description" : "The planning task ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "c4ba1fb5-96e1-487b-b642-988fe979140f"
+            },
+            "orderId" : {
+              "description" : "The order ID.",
+              "type" : "string",
+              "format" : "uuid",
+              "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "example" : "dabe136b-8efd-45de-a792-b73596af25f9"
+            },
+            "orderDisplayId" : {
+              "description" : "The display ID of the order.",
+              "type" : "integer",
+              "format" : "int64",
+              "example" : 300001647
+            },
+            "failedReason" : {
+              "description" : "The reason the orchestration planning failed.",
+              "type" : "string",
+              "maxLength" : 500,
+              "example" : "Missing dependant object value."
+            },
+            "createdAt" : {
+              "description" : "The date and time at which the planning task was created.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2022-12-09T19:40:13.446Z"
+            },
+            "modifiedAt" : {
+              "description" : "The date and time at which the planning task was modified.",
+              "type" : "string",
+              "format" : "date-time",
+              "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+              "example" : "2022-12-09T19:44:13.446Z"
+            }
+          }
+        }
+      },
+      "singlePlanningTaskReadResponse" : {
+        "description" : "Detailed information for the planning task retrieved.",
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "description" : "The planning task ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "c4ba1fb5-96e1-487b-b642-988fe979140f"
+          },
+          "orderId" : {
+            "description" : "The order ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "dabe136b-8efd-45de-a792-b73596af25f9"
+          },
+          "orderDisplayId" : {
+            "description" : "The display ID of the order.",
+            "type" : "integer",
+            "format" : "int64",
+            "example" : 300001647
+          },
+          "failedReason" : {
+            "description" : "The reason the orchestration planning failed.",
+            "type" : "string",
+            "maxLength" : 500,
+            "example" : "Missing dependant object value."
+          },
+          "createdAt" : {
+            "description" : "The date and time at which the planning task was created.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-09T19:40:13.446Z"
+          },
+          "modifiedAt" : {
+            "description" : "The date and time at which the planning task was modified.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-09T19:44:13.446Z"
+          },
+          "requestPayload" : {
+            "description" : "The order request payload.",
+            "type" : "object",
+            "example" : { }
+          }
+        }
+      },
+      "planningTaskRetriggerRequest" : {
+        "description" : "The planning task to retrigger.<br><br>Maximum 1MB bytes body.",
+        "type" : "object",
+        "required" : [ "planningTaskId" ],
+        "properties" : {
+          "planningTaskId" : {
+            "description" : "The ID of the planning task to retrigger.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "85be689f-f32e-4953-adfe-db7c5d2ed846"
+          }
+        }
+      },
+      "planningTaskRetriggerResponse" : {
+        "description" : "The retriggered planning task.",
+        "type" : "object",
+        "properties" : {
+          "planningTaskId" : {
+            "description" : "The retriggered planning task ID.",
+            "type" : "string",
+            "format" : "uuid",
+            "pattern" : "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+            "example" : "5209dc25-6b3f-4ce8-ba6e-3850a5d6833d"
+          },
+          "triggeredAt" : {
+            "description" : "The date and time at which the planning task was triggered.",
+            "type" : "string",
+            "format" : "date-time",
+            "pattern" : "yyyy-MM-dd HH:mm:ss[.SSS]Z",
+            "example" : "2022-12-08T19:25:40.449Z"
+          }
+        }
+      },
+      "errorResponse" : {
+        "description" : "The schema for API-specified errors.",
+        "type" : "object",
+        "properties" : {
+          "error" : {
+            "type" : "object",
+            "properties" : {
+              "code" : {
+                "description" : "The technical code of the error.",
+                "type" : "string",
+                "pattern" : "[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9]",
+                "example" : "000-000"
+              },
+              "message" : {
+                "description" : "Localized message describing the error.",
+                "type" : "string",
+                "example" : "Unexpected error occurred."
+              },
+              "details" : {
+                "description" : "The detailed list of errors.",
+                "type" : "array",
+                "items" : {
+                  "description" : "The schema for the specific error.",
+                  "type" : "object",
+                  "properties" : {
+                    "code" : {
+                      "description" : "The technical code of the error.",
+                      "type" : "string",
+                      "pattern" : "[0-9][0-9][0-9][0-9]-[0-9][0-9][0-9]",
+                      "example" : "000-000"
+                    },
+                    "message" : {
+                      "description" : "Localized message describing the error.",
+                      "type" : "string",
+                      "example" : "Missing mandatory configuration, process cannot continue."
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "responses" : {
+      "multipleDispatchTaskReadResponse" : {
+        "description" : "The dispatch tasks were successfully retrieved.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/multipleDispatchTaskReadResponse"
+            }
+          }
+        }
+      },
+      "singleDispatchTaskReadResponse" : {
+        "description" : "The dispatch task was successfully retrieved.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/singleDispatchTaskReadResponse"
+            }
+          }
+        }
+      },
+      "dispatchTaskRetriggerResponse" : {
+        "description" : "The dispatch tasks were successfully retriggered.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/dispatchTaskRetriggerResponse"
+            }
+          }
+        }
+      },
+      "dispatchTaskConfirmResponse" : {
+        "description" : "The order confirmation message was successfully received, and the dispatch task was updated accordingly.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/dispatchTaskConfirmResponse"
+            }
+          }
+        }
+      },
+      "multipleFulfillmentRequestReadResponse" : {
+        "description" : "The fulfillment requests were successfully retrieved.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/multipleFulfillmentRequestReadResponse"
+            }
+          }
+        }
+      },
+      "singleFulfillmentRequestReadResponse" : {
+        "description" : "The fulfillment request was successfully retrieved.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/singleFulfillmentRequestReadResponse"
+            }
+          }
+        }
+      },
+      "fulfillmentRequestRetriggerResponse" : {
+        "description" : "The request to retrigger fulfillment requests was successful.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/fulfillmentRequestRetriggerResponse"
+            }
+          }
+        }
+      },
+      "multiplePlanningTaskReadResponse" : {
+        "description" : "The planning tasks were successfully retrieved.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/multiplePlanningTaskReadResponse"
+            }
+          }
+        }
+      },
+      "singlePlanningTaskReadResponse" : {
+        "description" : "The planning task was successfully retrieved.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/singlePlanningTaskReadResponse"
+            }
+          }
+        }
+      },
+      "planningTaskRetriggerResponse" : {
+        "description" : "The planning task was successfully retriggered.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/planningTaskRetriggerResponse"
+            }
+          }
+        }
+      },
+      "400" : {
+        "description" : "Your input data is not valid or is not in a consistent format. Please check it and try again.<br>You can also check the response payload for more information.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/errorResponse"
+            }
+          }
+        }
+      },
+      "404" : {
+        "description" : "No results were found. If you provided parameters, ensure that they are valid.<br>You can also check the response payload for more information.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/errorResponse"
+            }
+          }
+        }
+      },
+      "413" : {
+        "description" : "The maximum request payload size has been exceeded.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/errorResponse"
+            }
+          }
+        }
+      },
+      "500" : {
+        "description" : "There was an error on the server side. If the problem persists, please report the error as described by SAP.",
+        "content" : {
+          "application/json" : {
+            "schema" : {
+              "$ref" : "#/components/schemas/errorResponse"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "oauth2" : {
+        "type" : "oauth2",
+        "description" : "To use this API, you need to obtain the OAuth client credentials (client ID and secret) using the SAP BTP cockpit. After that, pass these client credentials to the SAP BTP token endpoint to obtain an access token.<br>For more information, see the Service Guide.",
+        "flows" : {
+          "clientCredentials" : {
+            "tokenUrl" : "https://{identityzone}.authentication.{region}.hana.ondemand.com/oauth/token",
+            "scopes" : {
+              "{identityzone}.DispatchView" : "View dispatch tasks and order item statuses.",
+              "{identityzone}.DispatchManage" : "Manage dispatch tasks by retriggering them.",
+              "{identityzone}.DispatchIntegrate" : "Integrate with your fulfillment system (e.g. Receive fulfillment confirmation and order item statuses)."
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-sap-stateInfo" : {
+    "state" : "ACTIVE"
+  },
+  "x-sap-shortText" : "Enables you to orchestrate orders between SAP Order Management foundation and your fulfillment system.",
+  "x-original-swagger-version" : "2.0"
+}
